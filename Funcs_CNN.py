@@ -348,7 +348,7 @@ def profitage(Coin, input_data_length, Spk, wait_tick=10, over_tick=15, Date='20
 
     df = pd.read_excel('./pred_ohlcv/%s/%s %s ohlcv.xlsx' % (input_data_length, Date, Coin), index_col=0)
 
-    period = 20
+    period = 9
     df['closegap_cunsum'] = (df['close'] - df['close'].shift(1)).cumsum()
     df['closegap_abs_cumsum'] = abs(df['close'] - df['close'].shift(1)).cumsum()
     # print(df)
@@ -625,6 +625,7 @@ def profitage(Coin, input_data_length, Spk, wait_tick=10, over_tick=15, Date='20
         plt.subplot(211)
         plt.plot(df[['close']], 'y', label='close', linewidth=5.0)
         plt.plot(df[['MA60']], 'b', label='MA60', linewidth=5.0)
+        plt.plot(df[['MA5']], 'r', label='MA5', linewidth=5.0)
         plt.xticks(fontsize=20)
         plt.yticks(fontsize=20)
         plt.legend(loc='upper right', fontsize=20)
@@ -637,14 +638,14 @@ def profitage(Coin, input_data_length, Spk, wait_tick=10, over_tick=15, Date='20
         for trade_num in range(len(spanlist_breakaway)):
             plt.axvspan(spanlist_breakaway[trade_num][0], spanlist_breakaway[trade_num][1], facecolor='red', alpha=0.5)
 
-        plt.subplot(212)
-        plt.plot(df[['CMO']], 'r', label='CMO', linewidth=5.0)
-
-        for trade_num in range(len(spanlist_limit)):
-            plt.axvspan(spanlist_limit[trade_num][0], spanlist_limit[trade_num][1], facecolor='green', alpha=0.5)
-
-        for trade_num in range(len(spanlist_breakaway)):
-            plt.axvspan(spanlist_breakaway[trade_num][0], spanlist_breakaway[trade_num][1], facecolor='red', alpha=0.5)
+        # plt.subplot(212)
+        # plt.plot(df[['CMO']], 'r', label='CMO', linewidth=5.0)
+        #
+        # for trade_num in range(len(spanlist_limit)):
+        #     plt.axvspan(spanlist_limit[trade_num][0], spanlist_limit[trade_num][1], facecolor='green', alpha=0.5)
+        #
+        # for trade_num in range(len(spanlist_breakaway)):
+        #     plt.axvspan(spanlist_breakaway[trade_num][0], spanlist_breakaway[trade_num][1], facecolor='red', alpha=0.5)
 
         # plot 저장 & 닫기
         plt.savefig("./Figure_fluc/Results/%s/%s %s.png" % (input_data_length, Date, Coin), dpi=300)
