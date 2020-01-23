@@ -45,8 +45,8 @@ def made_x(file, input_data_length, Range_fluc, get_fig):
         # ----- 데이터 전처리 -----#
         price = ohlcv_data[:, :4]
         volume = ohlcv_data[:, [4]]
-        MA60 = ohlcv_data[:, [5]]
-        fluc_close = ohlcv_data[:, [6]]
+        MA60 = ohlcv_data[:, [-2]]
+        fluc_close = ohlcv_data[:, [-1]]
 
         scaled_price = min_max_scaler(price)
         scaled_volume = min_max_scaler(volume)
@@ -83,9 +83,9 @@ def made_x(file, input_data_length, Range_fluc, get_fig):
         # ----------- FLUC_CLOSE TO SPAN, 넘겨주기 위해서 INDEX 를 담아주어야 한다. -----------#
         if get_fig == 1:
             spanlist = []
-            for m in range(len(ohlcv_excel['fluc_close'])):
-                if ohlcv_excel['fluc_close'].iloc[m] > Range_fluc:
-                    if m + 1 < len(ohlcv_excel):
+            for m in range(len(ohlcv_data[:, [-1]])):
+                if ohlcv_data[:, [-1]][m] > Range_fluc:
+                    if m + 1 < len(ohlcv_data[:, [-1]]):
                         spanlist.append((m, m + 1))
                     else:
                         spanlist.append((m - 1, m))
@@ -113,7 +113,7 @@ def made_x(file, input_data_length, Range_fluc, get_fig):
 
 if __name__ == '__main__':
 
-    for i in range(3, 5):
+    for i in range(3, 4):
 
         # ----------- Params -----------#
         input_data_length = 6 * (i ** 2)
@@ -136,13 +136,14 @@ if __name__ == '__main__':
                 # SAVING X, Y
                 X = np.array(Made_X)
                 Y = np.array(Made_Y)
-                np.save('./Made_X/Made_X %s' % input_data_length, X)
-                np.save('./Made_X/Made_Y %s' % input_data_length, Y)
 
                 # 누적 데이터량 표시
                 print(file, len(Made_X))  # 현재까지 321927개
                 # if len(Made_X) > 100000:
                 #     quit()
+
+        np.save('./Made_X/Made_X %s' % input_data_length, X)
+        np.save('./Made_X/Made_Y %s' % input_data_length, Y)
 
         plt.plot(Made_Y)
         plt.savefig('./Figure_fluc/Made_Y %s.png' % input_data_length)
