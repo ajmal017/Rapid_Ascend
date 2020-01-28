@@ -24,14 +24,26 @@ def min_max_scaler(price):
 def made_x(file, input_data_length, check_span, get_fig):
 
     ohlcv_excel = pd.read_excel(dir + file, index_col=0)
+
+    period = 9
+    ohlcv_excel['closegap_cunsum'] = (ohlcv_excel['close'] - ohlcv_excel['close'].shift(1)).cumsum()
+    ohlcv_excel['closegap_abs_cumsum'] = abs(ohlcv_excel['close'] - ohlcv_excel['close'].shift(1)).cumsum()
+    # print(ohlcv_excel)
+
+    ohlcv_excel['CMO'] = (ohlcv_excel['closegap_cunsum'] - ohlcv_excel['closegap_cunsum'].shift(period)) / (
+            ohlcv_excel['closegap_abs_cumsum'] - ohlcv_excel['closegap_abs_cumsum'].shift(period)) * 100
+
+    del ohlcv_excel['closegap_cunsum']
+    del ohlcv_excel['closegap_abs_cumsum']
+
     ohlcv_excel['MA60'] = ohlcv_excel['close'].rolling(60).mean()
     # 현재 포인트가 최저점 (10개의 데이터 중) 이면, 1 / 0
     # 현재 포인트가 최저점 (앞 10개의 뒤 10개 데이터 중) 이면, 1 / 0
 
     ohlcv_excel['high_check'] = np.where((ohlcv_excel['close'].rolling(check_span).max() <= ohlcv_excel['close'])
                                         & (ohlcv_excel['close'].shift(-(check_span - 1)).rolling(check_span).max() <= ohlcv_excel['close']), 1, 0)
-    # ohlcv_excel['prev_max'] = ohlcv_excel['high'].rolling(10).max()
-    # ohlcv_excel['follow_max'] = ohlcv_excel['high'].shift(-9).rolling(10).max()
+    # ohlcv_excel['prev_max'] = ohlcv_excel['high'].rolling(check_span).max()
+    # ohlcv_excel['follow_max'] = ohlcv_excel['high'].shift(-(check_span - 1)).rolling(check_span).max()
 
     # ----------- dataX, dataY 추출하기 -----------#
     # print(ohlcv_excel.iloc[:, 2:])
@@ -52,15 +64,18 @@ def made_x(file, input_data_length, check_span, get_fig):
         # ----- 데이터 전처리 -----#
         price = ohlcv_data[:, :4]
         volume = ohlcv_data[:, [4]]
+        CMO = ohlcv_data[:, [-3]]
         MA60 = ohlcv_data[:, [-2]]
         high_check = ohlcv_data[:, [-1]]
 
         scaled_price = min_max_scaler(price)
         scaled_volume = min_max_scaler(volume)
+        scaled_CMO = min_max_scaler(CMO)
         scaled_MA60 = min_max_scaler(MA60)
         # print(scaled_MA60.shape)
 
         x = np.concatenate((scaled_price, scaled_volume, scaled_MA60), axis=1)  # axis=1, 세로로 합친다
+        # x = np.concatenate((scaled_price, scaled_volume, scaled_CMO, scaled_MA60), axis=1)  # axis=1, 세로로 합친다
         y = high_check
         # print(high_check)
 
@@ -138,18 +153,21 @@ if __name__ == '__main__':
                 Made_X += result[0]
                 Made_Y += result[1]
 
-                # SAVING X, Y
-                X = np.array(Made_X)
-                Y = np.array(Made_Y)
-
                 # 누적 데이터량 표시
                 print(file, len(Made_X))  # 현재까지 321927개
                 # if len(Made_X) > 100000:
                 # quit()
 
+        # SAVING X, Y
+        X = np.array(Made_X)
+        Y = np.array(Made_Y)
+
         np.save('./Made_X_high/Made_X %s' % input_data_length, X)
         np.save('./Made_X_high/Made_Y %s' % input_data_length, Y)
 
+        # np.save('./Made_X_high/Made_X %s CMO' % input_data_length, X)
+        # np.save('./Made_X_high/Made_Y %s CMO' % input_data_length, Y)
+
         plt.plot(Made_Y)
-        plt.savefig('./Figure_fluc/high/Made_Y %s.png' % input_data_length)
+        plt.savefig('./Made_X_high/Made_Y %s.png' % input_data_length)
         plt.close()

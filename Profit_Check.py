@@ -4,7 +4,8 @@ import os
 
 def profit_check(Date) :
     temp = []
-    dir = './pred_ohlcv'
+    dir = './pred_ohlcv/54'
+    # input_data_length = input('input data length : ')
     ohlcv_list = os.listdir(dir)
 
     for file in ohlcv_list:
@@ -17,7 +18,7 @@ def profit_check(Date) :
         try:
             df = pd.read_excel("./BackTest/" + "%s BackTest %s.xlsx" % (Date, Coin))
             Profits = df.Profits.cumprod().iloc[-1]
-            if Profits != 1 :
+            if Profits < 1 :
                 print(Coin, Profits)
             TotalProfits *= Profits
         except Exception as e :
@@ -26,7 +27,7 @@ def profit_check(Date) :
     return TotalProfits
 
 
-dir = './pred_ohlcv'
+dir = './pred_ohlcv/54'
 ohlcv_list = os.listdir(dir)
 
 Datelist = []

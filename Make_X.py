@@ -103,7 +103,7 @@ def made_x(file, input_data_length, Range_fluc, get_fig):
 
             Date = file.split()[0]
             Coin = file.split()[1].split('.')[0]
-            plt.savefig('./Figure_fluc/%s %s.png' % (Date, Coin), dpi=500)
+            plt.savefig('./Figure_data/%s %s.png' % (Date, Coin), dpi=500)
             plt.close()
             # plt.show()
             # ----------- Chart 그리기 -----------#
@@ -133,18 +133,19 @@ if __name__ == '__main__':
                 Made_X += result[0]
                 Made_Y += result[1]
 
-                # SAVING X, Y
-                X = np.array(Made_X)
-                Y = np.array(Made_Y)
-
                 # 누적 데이터량 표시
                 print(file, len(Made_X))  # 현재까지 321927개
                 # if len(Made_X) > 100000:
-                #     quit()
+                # quit()
+
+        # SAVING X, Y
+        X = np.array(Made_X)
+        Y = np.array(Made_Y)
+        print(np.sum(Y))
 
         np.save('./Made_X/Made_X %s' % input_data_length, X)
         np.save('./Made_X/Made_Y %s' % input_data_length, Y)
 
-        plt.plot(Made_Y)
-        plt.savefig('./Figure_fluc/Made_Y %s.png' % input_data_length)
+        plt.plot(Y)
+        plt.savefig('./Made_X/Made_Y %s.png' % input_data_length)
         plt.close()
