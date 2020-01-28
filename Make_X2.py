@@ -68,35 +68,66 @@ def low_high(Coin, input_data_length):
         return X_test, closeprice
 
 
-def made_x(file, input_data_length, Range_fluc, check_span, get_fig):
+def made_x(file, input_data_length, check_span, get_fig, model_num):
 
     ohlcv_excel = pd.read_excel(dir + file, index_col=0)
 
-    # period = 9
-    # ohlcv_excel['closegap_cunsum'] = (ohlcv_excel['close'] - ohlcv_excel['close'].shift(1)).cumsum()
-    # ohlcv_excel['closegap_abs_cumsum'] = abs(ohlcv_excel['close'] - ohlcv_excel['close'].shift(1)).cumsum()
-    # # print(ohlcv_excel)
-    #
-    # ohlcv_excel['CMO'] = (ohlcv_excel['closegap_cunsum'] - ohlcv_excel['closegap_cunsum'].shift(period)) / (
-    #         ohlcv_excel['closegap_abs_cumsum'] - ohlcv_excel['closegap_abs_cumsum'].shift(period)) * 100
-    #
-    # del ohlcv_excel['closegap_cunsum']
-    # del ohlcv_excel['closegap_abs_cumsum']
-
     ohlcv_excel['MA60'] = ohlcv_excel['close'].rolling(60).mean()
-    # 이전 & 이후 check_span 데이터와 현재 포인트를 비교해서 현재 포인트가 저가인지 고가인지 예측한다.
-    ohlcv_excel['fluc_close'] = ohlcv_excel['close'].shift(-10).rolling(10).max() / ohlcv_excel['close'].shift(1)
-    ohlcv_excel['low_check'] = np.where((ohlcv_excel['close'].shift(1).rolling(check_span).min() > ohlcv_excel['close'])
-                                        & (ohlcv_excel['close'].shift(-check_span).rolling(check_span).min() >
-                                           ohlcv_excel['close']), 1, 0)
-    ohlcv_excel['high_check'] = np.where((ohlcv_excel['close'].shift(1).rolling(check_span).max() < ohlcv_excel['close'])
-                                         & (ohlcv_excel['close'].shift(-check_span).rolling(check_span).max() <
-                                            ohlcv_excel['close']), 1, 0)
+    #   이전 & 이후 check_span 데이터와 현재 포인트를 비교해서 현재 포인트가 저가인지 고가인지 예측한다.
+    #   최대 3개의 중복 값을 허용한다.
+
+    #   고저점을 잡아주는 함수 구현
+    list_low_check = [np.NaN] * len(ohlcv_excel)
+    list_high_check = [np.NaN] * len(ohlcv_excel)
+    for i in range(check_span, len(ohlcv_excel) - check_span):
+        if ohlcv_excel['close'][i - check_span:i].min() >= ohlcv_excel['close'][i]:
+            if ohlcv_excel['close'][i + 1:i + 1 + check_span].min() >= ohlcv_excel['close'][i]:
+                if ohlcv_excel['close'][i - check_span:i + 1 + check_span].value_counts().sort_index().iloc[0] <= 3:
+                    list_low_check[i] = 1
+                else:
+                    list_low_check[i] = 0
+            else:
+                list_low_check[i] = 0
+        else:
+            list_low_check[i] = 0
+
+        if ohlcv_excel['close'][i - check_span:i].max() <= ohlcv_excel['close'][i]:
+            if ohlcv_excel['close'][i + 1:i + 1 + check_span].max() <= ohlcv_excel['close'][i]:
+                list_high_check[i] = 1
+                if ohlcv_excel['close'][i - check_span:i + 1 + check_span].value_counts().sort_index().iloc[-1] <= 3:
+                    list_high_check[i] = 1
+                else:
+                    list_high_check[i] = 0
+            else:
+                list_high_check[i] = 0
+        else:
+            list_high_check[i] = 0
+
+    # for i in range(len(ohlcv_excel) - check_span):
+    #     if ohlcv_excel['close'][i + 1:i + 1 + check_span].min() >= ohlcv_excel['close'][i]:
+    #         if ohlcv_excel['close'][i:i + 1 + check_span].value_counts().sort_index().iloc[0] <= 3:
+    #             list_low_check[i] = 1
+    #         else:
+    #             list_low_check[i] = 0
+    #     else:
+    #         list_low_check[i] = 0
+    #
+    #     if ohlcv_excel['close'][i + 1:i + 1 + check_span].max() <= ohlcv_excel['close'][i]:
+    #         list_high_check[i] = 1
+    #         if ohlcv_excel['close'][i:i + 1 + check_span].value_counts().sort_index().iloc[-1] <= 3:
+    #             list_high_check[i] = 1
+    #         else:
+    #             list_high_check[i] = 0
+    #     else:
+    #         list_high_check[i] = 0
+
+    ohlcv_excel['low_check'] = list_low_check
+    ohlcv_excel['high_check'] = list_high_check
 
     # ----------- dataX, dataY 추출하기 -----------#
-    # print(ohlcv_excel.info())
+    # print(ohlcv_excel)
     # ohlcv_excel.to_excel('test.xlsx')
-    # quit()
+    # return
 
     # NaN 제외하고 데이터 자르기 (데이터가 PIXEL 로 들어간다고 생각하면 된다)
     # MA60 부터 FLUC_CLOSE, 존재하는 값만 슬라이싱
@@ -117,10 +148,9 @@ def made_x(file, input_data_length, Range_fluc, check_span, get_fig):
         price = ohlcv_data[:, :4]
         volume = ohlcv_data[:, [4]]
         # CMO = ohlcv_data[:, [-5]]
-        MA60 = ohlcv_data[:, [-4]]
+        MA60 = ohlcv_data[:, [-3]]
 
         #   Flexible Y_data    #
-        fluc_close = ohlcv_data[:, [-3]]
         low_check = ohlcv_data[:, [-2]]
         high_check = ohlcv_data[:, [-1]]
 
@@ -130,26 +160,20 @@ def made_x(file, input_data_length, Range_fluc, check_span, get_fig):
         scaled_MA60 = min_max_scaler(MA60)
         # print(scaled_MA60.shape)
 
-        fluc_close = np.array(list(map(lambda x: 1 if x > Range_fluc else 0, fluc_close)))
-        fluc_close = fluc_close.reshape(-1, 1)
-        # print(fluc_close.shape)
-
         x = np.concatenate((scaled_price, scaled_volume, scaled_MA60), axis=1)  # axis=1, 세로로 합친다
-        y = fluc_close
         y_low = low_check
         y_high = high_check
         # print(x.shape, y.shape)  # (258, 6) (258, 1)
         # quit()
 
         dataX = []  # input_data length 만큼 담을 dataX 그릇
-        dataY = []  # Target 을 담을 그릇
         dataY_low = []  # Target 을 담을 그릇
         dataY_high = []  # Target 을 담을 그릇
 
-        for i in range(input_data_length, len(y)):
+        for i in range(input_data_length, len(ohlcv_data)):
+        # for i in range(input_data_length + 1, len(ohlcv_data)):
             # group_x >> 이전 완성된 데이터를 사용해보도록 한다. (진입하는 시점은 데이터가 완성되어있지 않으니까)
             group_x = x[i - input_data_length: i]  # group_y 보다 1개 이전 데이터
-            group_y = y[i]  # i = len(y) - 1
             group_y_low = y_low[i]
             group_y_high = y_high[i]
             # print(group_x.shape)  # (28, 6)
@@ -161,25 +185,20 @@ def made_x(file, input_data_length, Range_fluc, check_span, get_fig):
             #     print(x[i - 1])
             #     quit()
             dataX.append(group_x)  # dataX 리스트에 추가
-            dataY.append(group_y)  # dataY 리스트에 추가
             dataY_low.append(group_y_low)  # dataY 리스트에 추가
             dataY_high.append(group_y_high)  # dataY 리스트에 추가
 
+        if len(dataX) < 100:
+            return None
+
         #       Exstracting fiexd X_data       #
         sliced_ohlcv = ohlcv_data[input_data_length:, :6]
+        # sliced_ohlcv = ohlcv_data[input_data_length + 1:, :6]
 
         # ----------- FLUC_CLOSE TO SPAN, 넘겨주기 위해서 INDEX 를 담아주어야 한다. -----------#
         if get_fig == 1:
-            spanlist = []
             spanlist_low = []
             spanlist_high = []
-            raw_fluc_close = ohlcv_data[:, [-3]]
-            for m in range(len(raw_fluc_close)):
-                if raw_fluc_close[m] > Range_fluc:
-                    if m + 1 < len(raw_fluc_close):
-                        spanlist.append((m, m + 1))
-                    else:
-                        spanlist.append((m - 1, m))
 
             for m in range(len(low_check)):
                 if low_check[m] > 0.5:
@@ -198,22 +217,15 @@ def made_x(file, input_data_length, Range_fluc, check_span, get_fig):
             # ----------- 인덱스 초기화 됨 -----------#
 
             # ----------- 공통된 Chart 그리기 -----------#
-            plt.subplot(311)
-            plt.plot(min_max_scaler(ohlcv_data[:, 1:2]), 'r', label='close')
-            plt.plot(scaled_MA60, 'b', label='MA60')
-            plt.legend(loc='upper right')
 
-            # Spanning
-            for i in range(len(spanlist)):
-                plt.axvspan(spanlist[i][0], spanlist[i][1], facecolor='g', alpha=0.5)
-            plt.subplot(312)
+            plt.subplot(211)
             plt.plot(min_max_scaler(ohlcv_data[:, 1:2]), 'r', label='close')
             plt.plot(scaled_MA60, 'b', label='MA60')
             plt.legend(loc='upper right')
             for i in range(len(spanlist_low)):
                 plt.axvspan(spanlist_low[i][0], spanlist_low[i][1], facecolor='m', alpha=0.5)
 
-            plt.subplot(313)
+            plt.subplot(212)
             plt.plot(min_max_scaler(ohlcv_data[:, 1:2]), 'r', label='close')
             plt.plot(scaled_MA60, 'b', label='MA60')
             plt.legend(loc='upper right')
@@ -222,21 +234,22 @@ def made_x(file, input_data_length, Range_fluc, check_span, get_fig):
 
             Date = file.split()[0]
             Coin = file.split()[1].split('.')[0]
-            plt.savefig('./Figure_data/%s %s.png' % (Date, Coin), dpi=500)
+            plt.savefig('./Figure_data/%s_%s/%s %s.png' % (input_data_length, model_num, Date, Coin), dpi=500)
             plt.close()
             # plt.show()
             # ----------- Chart 그리기 -----------#
 
-        return dataX, dataY, dataY_low, dataY_high, sliced_ohlcv
+        return dataX, dataY_low, dataY_high, sliced_ohlcv
 
 
 if __name__ == '__main__':
 
     # ----------- Params -----------#
     input_data_length = 54
-    Range_fluc = 1.035  # >> Best Param 을 찾도록 한다.
     check_span = 40
     get_fig = 0
+
+    model_num = input('Press model number : ')
 
     Made_X = []
     Made_Y = []
@@ -245,35 +258,27 @@ if __name__ == '__main__':
 
     for file in ohlcv_list:
 
-        # file = '2019-10-21 BCD ohlcv.xlsx'
+        # if int(file.split()[0].split('-')[1]) == 1:
+        #     break
 
-        result = made_x(file, input_data_length, Range_fluc, check_span, get_fig)
+        result = made_x(file, input_data_length, check_span, get_fig, model_num)
 
         # ------------ 데이터가 있으면 dataX, dataY 병합하기 ------------#
         if result is not None:
 
             Made_X += result[0]
-            Made_Y += result[1]
-            Made_Y_low += result[2]
-            Made_Y_high += result[3]
+            Made_Y_low += result[1]
+            Made_Y_high += result[2]
 
             # 누적 데이터량 표시
-            print(file, len(Made_X))  # 현재까지 321927개
-            if len(Made_X) > 300000:
-                break
+            print(file, len(Made_X))
 
     # SAVING X, Y
     X = np.array(Made_X)
-    Y = np.array(Made_Y)
     Y_low = np.array(Made_Y_low)
     Y_high = np.array(Made_Y_high)
-    print(np.sum(Y))
 
-    np.save('./Made_X/Made_X %s' % input_data_length, X)
-    # np.save('./Made_X/Made_Y %s' % input_data_length, Y)
-    np.save('./Made_X_low/Made_Y %s' % input_data_length, Y_low)
-    np.save('./Made_X_high/Made_Y %s' % input_data_length, Y_high)
+    np.save('./Made_X/Made_X %s_%s' % (input_data_length, model_num), X)
+    np.save('./Made_X_low/Made_Y %s_%s' % (input_data_length, model_num), Y_low)
+    np.save('./Made_X_high/Made_Y %s_%s' % (input_data_length, model_num), Y_high)
 
-    plt.plot(Y)
-    plt.savefig('./Made_X/Made_Y %s.png' % input_data_length)
-    plt.close()
