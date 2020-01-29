@@ -344,10 +344,10 @@ def realtime_cmo(Coin, closeprice, period=9):
         return 0
 
 
-def profitage(Coin, input_data_length, wait_tick=3, over_tick=10, Date='2019-09-25', excel=0):
+def profitage(Coin, input_data_length, model_num, wait_tick=3, over_tick=10, Date='2019-09-25', excel=0):
 
     try :
-        df = pd.read_excel('./pred_ohlcv/%s/%s %s ohlcv.xlsx' % (input_data_length, Date, Coin), index_col=0)
+        df = pd.read_excel('./pred_ohlcv/%s_%s/%s %s ohlcv.xlsx' % (input_data_length, model_num, Date, Coin), index_col=0)
 
     except Exception as e:
         print('Error in loading ohlcv_data :', e)
@@ -534,41 +534,6 @@ def profitage(Coin, input_data_length, wait_tick=3, over_tick=10, Date='2019-09-
     if len(profits) == 0:
         return 1.0, 1.0, 1.0
 
-    # elif float(profits.iloc[-1]) != 1.0:
-    #
-    #     if len(spanlist_breakaway) != 0:
-    #
-    #         # 거래 체결마다 subplot 1,2 저장
-    #         price_df = df[['close', 'high', 'low', 'MA60']]
-    #         plt.figure(figsize=(30, 15))
-    #         # plt.subplot(211)
-    #         plt.plot(df[['close']], 'y', label='close', linewidth=5.0)
-    #         plt.plot(df[['MA60']], 'b', label='MA60', linewidth=5.0)
-    #         plt.xticks(fontsize=20)
-    #         plt.yticks(fontsize=20)
-    #         plt.legend(loc='upper right', fontsize=20)
-    #         ylim_df = price_df.iloc[spanlist[0][0]:spanlist[-1][1]]
-    #         plt.ylim(ylim_df['low'].min(), ylim_df['high'].max())
-    #
-    #         for trade_num in range(len(spanlist_limit)):
-    #             plt.axvspan(spanlist_limit[trade_num][0], spanlist_limit[trade_num][1], facecolor='green', alpha=0.5)
-    #
-    #         for trade_num in range(len(spanlist_breakaway)):
-    #             plt.axvspan(spanlist_breakaway[trade_num][0], spanlist_breakaway[trade_num][1], facecolor='red', alpha=0.5)
-    #
-    #         # plt.subplot(212)
-    #         # plt.plot(df[['CMO']], 'r', label='CMO', linewidth=5.0)
-    #         #
-    #         # for trade_num in range(len(spanlist_limit)):
-    #         #     plt.axvspan(spanlist_limit[trade_num][0], spanlist_limit[trade_num][1], facecolor='green', alpha=0.5)
-    #         #
-    #         # for trade_num in range(len(spanlist_breakaway)):
-    #         #     plt.axvspan(spanlist_breakaway[trade_num][0], spanlist_breakaway[trade_num][1], facecolor='red', alpha=0.5)
-    #
-    #         # plot 저장 & 닫기
-    #         plt.savefig("./Figure_fluc/Results/%s/Red/%s %s.png" % (input_data_length, Date, Coin), dpi=300)
-    #         plt.close()
-
     return float(profits.iloc[-1]), float(profits.iloc[-1]) / Minus_Profits, Minus_Profits
 
 
@@ -581,9 +546,10 @@ if __name__=="__main__":
     Coin = excel_file.split()[1].split('.')[0]
     Date = excel_file.split()[0]
     input_data_length = 54
+    model_num = input('Press model num : ')
     wait_tick = 3
     over_tick = 10
     ######################################################################
 
-    print(profitage(Coin, input_data_length, wait_tick, over_tick, Date, 0))
+    print(profitage(Coin, input_data_length, model_num, wait_tick, over_tick, Date, 0))
 

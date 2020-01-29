@@ -1,11 +1,13 @@
 import pandas as pd
+import numpy as np
 import os
 
 
-def profit_check(Date) :
+def profit_check(Date, model_num) :
     temp = []
-    dir = './pred_ohlcv/54'
     # input_data_length = input('input data length : ')
+    input_data_length = 54
+    dir = './pred_ohlcv/{}_{}'.format(input_data_length, model_num)
     ohlcv_list = os.listdir(dir)
 
     for file in ohlcv_list:
@@ -18,8 +20,8 @@ def profit_check(Date) :
         try:
             df = pd.read_excel("./BackTest/" + "%s BackTest %s.xlsx" % (Date, Coin))
             Profits = df.Profits.cumprod().iloc[-1]
-            if Profits < 1 :
-                print(Coin, Profits)
+            # if Profits == np.NaN :
+            print(Coin, Profits)
             TotalProfits *= Profits
         except Exception as e :
             print(e)
@@ -27,7 +29,9 @@ def profit_check(Date) :
     return TotalProfits
 
 
-dir = './pred_ohlcv/54'
+input_data_length = 54
+model_num = 3
+dir = './pred_ohlcv/{}_{}'.format(input_data_length, model_num)
 ohlcv_list = os.listdir(dir)
 
 Datelist = []
@@ -40,5 +44,5 @@ for file in ohlcv_list:
 
 for Date in Datelist:
     print(Date)
-    profit_check(Date)
+    profit_check(Date, model_num)
     print()

@@ -32,21 +32,16 @@ if __name__ == '__main__':
 
     # input_data_length = int(input("Input Data Length : "))
     input_data_length = 54
-    except_list = os.listdir('./pred_ohlcv/%s' % input_data_length)
+    model_num = input('Press model num : ')
+    except_list = os.listdir('./pred_ohlcv/%s_%s' % (input_data_length, model_num))
 
     #           PARAMS           #
     check_span = 40
-    get_fig = 0
+    get_fig = 1
 
     #       LOAD MODEL      #
-    model_low = load_model('./model/rapid_ascending_low %s.hdf5' % input_data_length)
-    model_high = load_model('./model/rapid_ascending_high %s.hdf5' % input_data_length)
-
-    # model_low = load_model('./model/rapid_ascending_low %s_1.hdf5' % input_data_length)
-    # model_high = load_model('./model/rapid_ascending_high %s_1.hdf5' % input_data_length)
-
-    # model_low = load_model('./model/rapid_ascending_low %s_2.hdf5' % input_data_length)
-    # model_high = load_model('./model/rapid_ascending_high %s_2.hdf5' % input_data_length)
+    model_low = load_model('./model/rapid_ascending_low %s_%s.hdf5' % (input_data_length, model_num))
+    model_high = load_model('./model/rapid_ascending_high %s_%s.hdf5' % (input_data_length, model_num))
 
     for file in ohlcv_list:
 
@@ -56,15 +51,15 @@ if __name__ == '__main__':
 
         print('loading %s' % file)
 
-        try:
-            X_test, Y_test_low, Y_test_high, sliced_ohlcv = made_x(file, input_data_length, check_span, get_fig)
+        # try:
+        X_test, Y_test_low, Y_test_high, sliced_ohlcv = made_x(file, input_data_length, model_num, check_span, get_fig)
 
-            if len(sliced_ohlcv) < 100:
-                continue
-
-        except Exception as e:
-            print('Error in getting data from made_x :', e)
+        if len(sliced_ohlcv) < 100:
             continue
+
+        # except Exception as e:
+        #     print('Error in getting data from made_x :', e)
+        #     continue
 
         closeprice = np.roll(np.array(list(map(lambda x: x[-1][1:2][0], X_test))), -1)
         MA60 = np.roll(np.array(list(map(lambda x: x[-1][[5]][0], X_test))), -1)
@@ -143,9 +138,7 @@ if __name__ == '__main__':
                 continue
             # print(pred_ohlcv_df.tail(20))
             # quit()
-            pred_ohlcv_df.to_excel('./pred_ohlcv/%s/%s' % (input_data_length, file))
-            # pred_ohlcv_df.to_excel('./pred_ohlcv/%s_1/%s' % (input_data_length, file))
-            # pred_ohlcv_df.to_excel('./pred_ohlcv/%s_2/%s' % (input_data_length, file))
+            pred_ohlcv_df.to_excel('./pred_ohlcv/%s_%s/%s' % (input_data_length, model_num, file))
 
             if get_fig == 1:
                 spanlist_low = []
@@ -186,9 +179,7 @@ if __name__ == '__main__':
 
                 Date = file.split()[0]
                 Coin = file.split()[1].split('.')[0]
-                plt.savefig('./Figure_pred/%s/%s %s.png' % (input_data_length, Date, Coin), dpi=500)
-                # plt.savefig('./Figure_pred/%s_1/%s %s.png' % (input_data_length, Date, Coin), dpi=500)
-                # plt.savefig('./Figure_pred/%s_2/%s %s.png' % (input_data_length, Date, Coin), dpi=500)
+                plt.savefig('./Figure_pred/%s_%s/%s %s.png' % (input_data_length, model_num, Date, Coin), dpi=500)
                 plt.close()
 
 

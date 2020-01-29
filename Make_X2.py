@@ -68,58 +68,33 @@ def low_high(Coin, input_data_length):
         return X_test, closeprice
 
 
-def made_x(file, input_data_length, check_span, get_fig, model_num):
+def made_x(file, input_data_length, model_num, check_span, get_fig):
 
     ohlcv_excel = pd.read_excel(dir + file, index_col=0)
 
     ohlcv_excel['MA60'] = ohlcv_excel['close'].rolling(60).mean()
-    #   이전 & 이후 check_span 데이터와 현재 포인트를 비교해서 현재 포인트가 저가인지 고가인지 예측한다.
+    #   이후 check_span 데이터와 현재 포인트를 비교해서 현재 포인트가 저가인지 고가인지 예측한다.
     #   최대 3개의 중복 값을 허용한다.
 
     #   고저점을 잡아주는 함수 구현
     list_low_check = [np.NaN] * len(ohlcv_excel)
     list_high_check = [np.NaN] * len(ohlcv_excel)
-    for i in range(check_span, len(ohlcv_excel) - check_span):
-        if ohlcv_excel['close'][i - check_span:i].min() >= ohlcv_excel['close'][i]:
-            if ohlcv_excel['close'][i + 1:i + 1 + check_span].min() >= ohlcv_excel['close'][i]:
-                if ohlcv_excel['close'][i - check_span:i + 1 + check_span].value_counts().sort_index().iloc[0] <= 3:
-                    list_low_check[i] = 1
-                else:
-                    list_low_check[i] = 0
+    for i in range(len(ohlcv_excel) - check_span):
+        if ohlcv_excel['close'][i + 1:i + 1 + check_span].min() >= ohlcv_excel['close'][i]:
+            if ohlcv_excel['close'][i:i + 1 + check_span].value_counts().sort_index().iloc[0] <= 3:
+                list_low_check[i] = 1
             else:
                 list_low_check[i] = 0
         else:
             list_low_check[i] = 0
 
-        if ohlcv_excel['close'][i - check_span:i].max() <= ohlcv_excel['close'][i]:
-            if ohlcv_excel['close'][i + 1:i + 1 + check_span].max() <= ohlcv_excel['close'][i]:
+        if ohlcv_excel['close'][i + 1:i + 1 + check_span].max() <= ohlcv_excel['close'][i]:
+            if ohlcv_excel['close'][i:i + 1 + check_span].value_counts().sort_index().iloc[-1] <= 3:
                 list_high_check[i] = 1
-                if ohlcv_excel['close'][i - check_span:i + 1 + check_span].value_counts().sort_index().iloc[-1] <= 3:
-                    list_high_check[i] = 1
-                else:
-                    list_high_check[i] = 0
             else:
                 list_high_check[i] = 0
         else:
             list_high_check[i] = 0
-
-    # for i in range(len(ohlcv_excel) - check_span):
-    #     if ohlcv_excel['close'][i + 1:i + 1 + check_span].min() >= ohlcv_excel['close'][i]:
-    #         if ohlcv_excel['close'][i:i + 1 + check_span].value_counts().sort_index().iloc[0] <= 3:
-    #             list_low_check[i] = 1
-    #         else:
-    #             list_low_check[i] = 0
-    #     else:
-    #         list_low_check[i] = 0
-    #
-    #     if ohlcv_excel['close'][i + 1:i + 1 + check_span].max() <= ohlcv_excel['close'][i]:
-    #         list_high_check[i] = 1
-    #         if ohlcv_excel['close'][i:i + 1 + check_span].value_counts().sort_index().iloc[-1] <= 3:
-    #             list_high_check[i] = 1
-    #         else:
-    #             list_high_check[i] = 0
-    #     else:
-    #         list_high_check[i] = 0
 
     ohlcv_excel['low_check'] = list_low_check
     ohlcv_excel['high_check'] = list_high_check
@@ -195,7 +170,7 @@ def made_x(file, input_data_length, check_span, get_fig, model_num):
         sliced_ohlcv = ohlcv_data[input_data_length:, :6]
         # sliced_ohlcv = ohlcv_data[input_data_length + 1:, :6]
 
-        # ----------- FLUC_CLOSE TO SPAN, 넘겨주기 위해서 INDEX 를 담아주어야 한다. -----------#
+        #                      Get Figure                     #
         if get_fig == 1:
             spanlist_low = []
             spanlist_high = []
@@ -246,10 +221,9 @@ if __name__ == '__main__':
 
     # ----------- Params -----------#
     input_data_length = 54
+    model_num = input('Press model number : ')
     check_span = 40
     get_fig = 0
-
-    model_num = input('Press model number : ')
 
     Made_X = []
     Made_Y = []
@@ -261,7 +235,7 @@ if __name__ == '__main__':
         # if int(file.split()[0].split('-')[1]) == 1:
         #     break
 
-        result = made_x(file, input_data_length, check_span, get_fig, model_num)
+        result = made_x(file, input_data_length, model_num, check_span, get_fig)
 
         # ------------ 데이터가 있으면 dataX, dataY 병합하기 ------------#
         if result is not None:

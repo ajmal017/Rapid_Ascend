@@ -9,7 +9,8 @@ warnings.filterwarnings("ignore")
 
 
 input_data_length = 54
-dir = './pred_ohlcv/%s' % input_data_length
+model_num = 1
+dir = './pred_ohlcv/%s_%s' % (input_data_length, model_num)
 ohlcv_list = os.listdir(dir)
 
 Datelist = []
@@ -45,7 +46,7 @@ def multi(wait_tick, over_tick, i):
 
     for Coin in Coinlist[i]:
         try:
-            EndProfits = Funcs_CNN2.profitage(Coin, input_data_length, wait_tick, over_tick, Datelist[i], 1)
+            EndProfits = Funcs_CNN2.profitage(Coin, input_data_length, model_num, wait_tick, over_tick, Datelist[i], 1)
             TotalProfits *= EndProfits[0]
             Plus_Profits *= EndProfits[1]
             Minus_Profits *= EndProfits[2]
@@ -66,7 +67,7 @@ if __name__ == '__main__':
     wait_tick = 3
     over_tick = 10
 
-    pool = Pool(processes=len(Datelist))
+    pool = Pool(processes=16)
     multi2 = partial(multi, wait_tick, over_tick)
     result = pool.map(multi2, [i for i in range(len(Datelist))])
     pool.close()
@@ -82,10 +83,9 @@ if __name__ == '__main__':
     DatesProfits = DatesProfits / len(Datelist)
     DatesProfits_Minus = DatesProfits_Minus / len(Datelist)
 
-    df3.to_excel("./BVC/%s %.3f %.3f by %s %s.xlsx" % (Datelist[-1], DatesProfits, DatesProfits_Minus, wait_tick, over_tick))
+    df3.to_excel("./BVC/%s %.3f %.3f by %s %s %s.xlsx" % (Datelist[-1], DatesProfits, DatesProfits_Minus, model_num, wait_tick, over_tick))
     Result_df = Result_df.append(pd.DataFrame(data=[[DatesProfits, DatesProfits_Minus, wait_tick, over_tick]],
                                               columns=['DatesProfits', 'DatesProfits_Minus', 'wait_tick', 'over_tick']))
-    Result_df.to_excel("./Result_df/%s Results.xlsx" % Datelist[-1])
     print("Profit per day : ", DatesProfits, DatesProfits_Minus)
 
 
