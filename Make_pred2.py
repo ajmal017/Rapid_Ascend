@@ -36,7 +36,7 @@ if __name__ == '__main__':
     except_list = os.listdir('./pred_ohlcv/%s_%s' % (input_data_length, model_num))
 
     #           PARAMS           #
-    check_span = 40
+    check_span = 60
     get_fig = 1
 
     #       LOAD MODEL      #
@@ -47,7 +47,7 @@ if __name__ == '__main__':
 
         # if file in except_list:
         #     continue
-        # file = '2019-10-05 CMT ohlcv.xlsx'
+        # file = '2020-01-29 FCT ohlcv.xlsx'
 
         print('loading %s' % file)
 

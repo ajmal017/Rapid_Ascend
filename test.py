@@ -17,32 +17,36 @@ from fake_useragent import UserAgent
 
 from pandas.core.algorithms import value_counts
 
-# home_dir = os.path.expanduser('~')
-# dir = home_dir + '/OneDrive/CoinBot/ohlcv/'
-# ohlcv_list = os.listdir(dir)
-#
+home_dir = os.path.expanduser('~')
+dir = home_dir + '/OneDrive/CoinBot/ohlcv/'
+ohlcv_list = os.listdir(dir)
+
 # for file in ohlcv_list:
 #     read_df = pd.read_excel(dir + file)
 #
 #     if len(read_df.columns) != 6:
 #         print(read_df.columns)
-with open("Keys.txt") as f:
-    lines = f.readlines()
-    key = lines[0].strip()
-    secret = lines[1].strip()
-    bithumb = pybithumb.Bithumb(key, secret)
 
-import time
-
-while True:
-    try:
-        message = bithumb.get_balance('BTC')['message']
-        num_list = re.findall("\d+", message)
-        print(int(num_list[0]) - int(num_list[1]))
-        time.sleep(1)
-
-    except:
-        print(bithumb.get_balance('BTC'))
-        break
+df = pybithumb.get_ohlcv('FCT', 'KRW', 'minute1')
+# df.to_excel(dir + '2020-01-29 FCT ohlcv.xlsx')
+print(df)
+# with open("Keys.txt") as f:
+#     lines = f.readlines()
+#     key = lines[0].strip()
+#     secret = lines[1].strip()
+#     bithumb = pybithumb.Bithumb(key, secret)
+#
+# import time
+#
+# while True:
+#     try:
+#         message = bithumb.get_balance('BTC')['message']
+#         num_list = re.findall("\d+", message)
+#         print(int(num_list[0]) - int(num_list[1]))
+#         time.sleep(1)
+#
+#     except:
+#         print(bithumb.get_balance('BTC'))
+#         break
 
 

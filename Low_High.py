@@ -102,6 +102,10 @@ while True:
     Complete = 0
     while True:
         try:
+            #       BuyOrder is dict / in Error 걸러주기        #
+            if type(BuyOrder) != tuple:
+                break
+
             balance = bithumb.get_balance(Coin)
 
             # 반 이상 체결된 경우
@@ -140,15 +144,13 @@ while True:
                                 print("    매수 체결    ")
                                 CancelOrder = bithumb.cancel_order(BuyOrder)
                             else:
-                                print("BuyOrder is None 또는 체결량 1000 KRW 이하\n")
+                                print("미체결 또는 체결량 1000 KRW 이하\n")
                     else:
                         if type(BuyOrder) == tuple:
                             CancelOrder = bithumb.cancel_order(BuyOrder)
                             print("미체결 또는 체결량 1000 KRW 이하")
                             print(CancelOrder)
                             print()
-                        else:
-                            print("BuyOrder error\n")
                 break
 
         except Exception as e:
@@ -167,7 +169,7 @@ while True:
             # 분당 한번 high_check predict 했을때, 1 결과값이 출력되면 매도 진행
             try:
                 #   이전 종가가 dataframe 으로 완성될 시기
-                if datetime.now().second == 6:
+                if datetime.now().second == 55:
                     while True:
                         try:
                             X_test, _ = low_high(Coin, input_data_length)
