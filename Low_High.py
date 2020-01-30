@@ -24,10 +24,10 @@ with open("Keys.txt") as f:
 input_data_length = 54
 limit_line_low = 0.9
 limit_line_high = 0.9
-model_num = 3
+model_num = 6
 
 #       Trade Info      #
-#   Check money    #
+#                                           Check money                                              #
 buy_wait = 10
 Profits = 1.0
 
@@ -74,11 +74,13 @@ while True:
 
         # -------------- 보유 원화 확인 --------------#
         balance = bithumb.get_balance(Coin)
+        start_coin = balance[0]
         krw = balance[2]
-        print("보유 원화 : ", krw)
-        # money = krw * 0.996
-        money = 3000
-        print("주문 원화 : ", money)
+        print()
+        print("보유 원화 :", krw, end=' ')
+        money = krw * 0.996
+        # money = 3000
+        print("주문 원화 :", money)
         if krw < 1000:
             print("거래가능 원화가 부족합니다.\n")
             continue
@@ -89,7 +91,7 @@ while True:
 
         # 매수 등록
         BuyOrder = bithumb.buy_limit_order(Coin, limit_buy_price, buyunit, "KRW")
-        print("      %s %s KRW 매수 등록      " % (Coin, limit_buy_price))
+        print("      %s %s KRW 매수 등록      " % (Coin, limit_buy_price), end=' ')
         print(BuyOrder)
 
     except Exception as e:
@@ -102,19 +104,34 @@ while True:
     Complete = 0
     while True:
         try:
-            #       BuyOrder is dict / in Error 걸러주기        #
-            if type(BuyOrder) != tuple:
-                break
-
             balance = bithumb.get_balance(Coin)
 
-            # 반 이상 체결된 경우
-            if balance[0] / buyunit >= 0.5:
+            #       BuyOrder is dict / in Error 걸러주기        #
+            #   체결된 것 없나 확인하고
+            if type(BuyOrder) != tuple:
+                print('BuyOrder is not tuple')
+                if (balance[0] - start_coin) * limit_buy_price > 1000:
+                    Complete = 1
+                    print("    매수 체결    ")
+                    CancelOrder = bithumb.cancel_order(BuyOrder)
+                break
+
+            #   매수가 취소된 경우를 걸러주어야 한다.
+            else:
+                if bithumb.get_outstanding_order(BuyOrder) is None:
+                    #   체결량이 존재하는 경우는 buy_wait 까지 기다린다.
+                    if (balance[0] - start_coin) * limit_buy_price > 1000:
+                        pass
+                    else:
+                        print("매수가 취소되었습니다.\n")
+
+            #   반 이상 체결된 경우 : 체결된 코인량이 매수 코인량의 반 이상인경우
+            if (balance[0] - start_coin) / buyunit >= 0.5:
                 Complete = 1
-                # 부분 체결되지 않은 미체결 잔량을 주문 취소
-                print("    매수 체결    ")
+                #   부분 체결되지 않은 미체결 잔량을 주문 취소
+                print("    매수 체결    ", end=' ')
                 CancelOrder = bithumb.cancel_order(BuyOrder)
-                print("부분 매수 체결 : ", CancelOrder)
+                print("부분 체결 :", CancelOrder)
                 print()
                 time.sleep(1 / 80)
                 break
@@ -122,24 +139,23 @@ while True:
             #   최대 10분 동안 매수 체결을 대기한다.
             if time.time() - start > buy_wait * 60:
 
-                if balance[0] * limit_buy_price > 1000:
+                if (balance[0] - start_coin) * limit_buy_price > 1000:
                     Complete = 1
                     print("    매수 체결    ")
                     CancelOrder = bithumb.cancel_order(BuyOrder)
                 else:
+                    # outstanding >> None 출력되는 이유 : BuyOrder == None, 체결 완료
                     if bithumb.get_outstanding_order(BuyOrder) is None:
                         if type(BuyOrder) == tuple:
                             # 한번 더 검사 (get_outstanding_order 찍으면서 체결되는 경우가 존재한다.)
-                            if balance[0] * limit_buy_price > 1000:
+                            if (balance[0] - start_coin) * limit_buy_price > 1000:
                                 Complete = 1
                                 print("    매수 체결    ")
                                 CancelOrder = bithumb.cancel_order(BuyOrder)
-                            else:
-                                print("매수가 취소되었습니다.\n")
                         else:
                             # BuyOrder is None 에도 체결된 경우가 존재함
                             # 1000 원은 거래 가능 최소 금액
-                            if balance[0] * limit_buy_price > 1000:
+                            if (balance[0] - start_coin) * limit_buy_price > 1000:
                                 Complete = 1
                                 print("    매수 체결    ")
                                 CancelOrder = bithumb.cancel_order(BuyOrder)
@@ -188,7 +204,7 @@ while True:
                         balance = bithumb.get_balance(Coin)
                         sellunit = int((balance[0]) * 10000) / 10000.0
                         SellOrder = bithumb.sell_market_order(Coin, sellunit, 'KRW')
-                        print("    %s 시장가 매도     " % Coin)
+                        print("    %s 시장가 매도     " % Coin, end=' ')
                         # SellOrder = bithumb.sell_limit_order(Coin, limit_sell_pricePlus, sellunit, "KRW")
                         # print("##### %s %s KRW 지정 매도 재등록 #####" % (Coin, limit_sell_pricePlus))
                         print(SellOrder)
@@ -207,22 +223,24 @@ while True:
                     #   SellOrder Initializing
                     CancelOrder = bithumb.cancel_order(SellOrder)
                     if CancelOrder is False:  # 남아있는 매도 주문이 없다. 취소되었거나 체결완료.
-                        print("    매도 체결    ")
-                        Profits *= bithumb.get_balance(Coin)[2] / krw
+                        print("    매도 체결    ", end=' ')
+
+                        #   최종 원화 - (보유 원화 - 주문 원화) / 주문 원화 = 변화한 원화량 / 주문 원화량
+                        Profits *= (bithumb.get_balance(Coin)[2] - (krw - money)) / money
                         print("Accumulated Profits : %.6f\n" % Profits)
                         break
                     elif CancelOrder is None:  # SellOrder = none 인 경우
                         # 매도 재등록 해야함 ( 등록될 때까지 )
                         pass
                     else:
-                        print("    매도 취소    ")
+                        print("    매도 취소    ", end=' ')
                         print(CancelOrder)
                     print()
 
                     balance = bithumb.get_balance(Coin)
                     sellunit = int((balance[0]) * 10000) / 10000.0
                     SellOrder = bithumb.sell_market_order(Coin, sellunit, 'KRW')
-                    print("    %s 시장가 매도     " % Coin)
+                    print("    %s 시장가 매도     " % Coin, end=' ')
                     # SellOrder = bithumb.sell_limit_order(Coin, limit_sell_pricePlus, sellunit, "KRW")
                     # print("##### %s %s KRW 지정 매도 재등록 #####" % (Coin, limit_sell_pricePlus))
                     print(SellOrder)
@@ -239,9 +257,11 @@ while True:
                     else:  # dictionary
                         # 체결 여부 확인 로직
                         ordersucceed = bithumb.get_balance(Coin)
+                        #   매도 주문 넣었을 때의 잔여 코인과 거래 후 코인이 다르고 사용중인 코인이 없으면 매도 체결
+                        #   거래 중인 코인이 있으면 매도체결이 출력되지 않는다.
                         if ordersucceed[0] != balance[0] and ordersucceed[1] == 0.0:
-                            print("    매도 체결    ")
-                            Profits *= bithumb.get_balance(Coin)[2] / krw
+                            print("    매도 체결    ", end=' ')
+                            Profits *= (bithumb.get_balance(Coin)[2] - (krw - money)) / money
                             print("Accumulated Profits : %.6f\n" % Profits)
                             break
                         else:
@@ -262,8 +282,8 @@ while True:
                             # 체결 여부 확인 로직
                             ordersucceed = bithumb.get_balance(Coin)
                             if ordersucceed[0] != balance[0] and ordersucceed[1] == 0.0:
-                                print("    매도 체결    ")
-                                Profits *= bithumb.get_balance(Coin)[2] / krw
+                                print("    매도 체결    ", end=' ')
+                                Profits *= (bithumb.get_balance(Coin)[2] - (krw - money)) / money
                                 print("Accumulated Profits : %.6f\n" % Profits)
                                 break
                             elif bithumb.get_outstanding_order(SellOrder) is not None:  # 혹시 모르는 미체결
@@ -295,8 +315,8 @@ while True:
                         # 체결 여부 확인 로직
                         ordersucceed = bithumb.get_balance(Coin)
                         if ordersucceed[0] != balance[0] and ordersucceed[1] == 0.0:
-                            print("    매도 체결    ")
-                            Profits *= bithumb.get_balance(Coin)[2] / krw
+                            print("    매도 체결    ", end=' ')
+                            Profits *= (bithumb.get_balance(Coin)[2] - (krw - money)) / money
                             print("Accumulated Profits : %.6f\n" % Profits)
                             break
                         else:

@@ -33,11 +33,19 @@ if __name__ == '__main__':
     # input_data_length = int(input("Input Data Length : "))
     input_data_length = 54
     model_num = input('Press model num : ')
+
+    #       Make folder      #
+    try:
+        os.mkdir('./pred_ohlcv/%s_%s/' % (input_data_length, model_num))
+        os.mkdir('./Figure_pred/%s_%s/' % (input_data_length, model_num))
+
+    except Exception as e:
+        pass
     except_list = os.listdir('./pred_ohlcv/%s_%s' % (input_data_length, model_num))
 
     #           PARAMS           #
-    check_span = 60
-    get_fig = 1
+    check_span = 30
+    get_fig = 0
 
     #       LOAD MODEL      #
     model_low = load_model('./model/rapid_ascending_low %s_%s.hdf5' % (input_data_length, model_num))
@@ -51,15 +59,15 @@ if __name__ == '__main__':
 
         print('loading %s' % file)
 
-        # try:
-        X_test, Y_test_low, Y_test_high, sliced_ohlcv = made_x(file, input_data_length, model_num, check_span, get_fig)
+        try:
+            X_test, Y_test_low, Y_test_high, sliced_ohlcv = made_x(file, input_data_length, model_num, check_span, get_fig)
 
-        if len(sliced_ohlcv) < 100:
+            if len(sliced_ohlcv) < 100:
+                continue
+
+        except Exception as e:
+            print('Error in getting data from made_x :', e)
             continue
-
-        # except Exception as e:
-        #     print('Error in getting data from made_x :', e)
-        #     continue
 
         closeprice = np.roll(np.array(list(map(lambda x: x[-1][1:2][0], X_test))), -1)
         MA60 = np.roll(np.array(list(map(lambda x: x[-1][[5]][0], X_test))), -1)

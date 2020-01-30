@@ -16,21 +16,29 @@ def profit_check(Date, model_num) :
             temp.append(filename[0].split(" ")[1])
 
     TotalProfits = 1.0
+    profit_list = []
+    mean_list = []
     for Coin in temp :
         try:
             df = pd.read_excel("./BackTest/" + "%s BackTest %s.xlsx" % (Date, Coin))
             Profits = df.Profits.cumprod().iloc[-1]
-            # if Profits == np.NaN :
-            print(Coin, Profits)
+            df['fluc'] = df['high'] / df['low']
+            mean = df['fluc'].mean()
+
+            if Profits > 1:
+                print(Coin, Profits)
+
+            profit_list.append(Profits)
+            mean_list.append(mean)
             TotalProfits *= Profits
-        except Exception as e :
+        except Exception as e:
             print(e)
 
-    return TotalProfits
+    return TotalProfits, profit_list, mean_list
 
 
 input_data_length = 54
-model_num = 3
+model_num = 7
 dir = './pred_ohlcv/{}_{}'.format(input_data_length, model_num)
 ohlcv_list = os.listdir(dir)
 
@@ -44,5 +52,5 @@ for file in ohlcv_list:
 
 for Date in Datelist:
     print(Date)
-    profit_check(Date, model_num)
+    res = profit_check(Date, model_num)
     print()

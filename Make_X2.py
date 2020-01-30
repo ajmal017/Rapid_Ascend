@@ -146,7 +146,6 @@ def made_x(file, input_data_length, model_num, check_span, get_fig):
         dataY_high = []  # Target 을 담을 그릇
 
         for i in range(input_data_length, len(ohlcv_data)):
-        # for i in range(input_data_length + 1, len(ohlcv_data)):
             # group_x >> 이전 완성된 데이터를 사용해보도록 한다. (진입하는 시점은 데이터가 완성되어있지 않으니까)
             group_x = x[i - input_data_length: i]  # group_y 보다 1개 이전 데이터
             group_y_low = y_low[i]
@@ -168,7 +167,6 @@ def made_x(file, input_data_length, model_num, check_span, get_fig):
 
         #       Exstracting fiexd X_data       #
         sliced_ohlcv = ohlcv_data[input_data_length:, :6]
-        # sliced_ohlcv = ohlcv_data[input_data_length + 1:, :6]
 
         #                      Get Figure                     #
         if get_fig == 1:
@@ -222,7 +220,14 @@ if __name__ == '__main__':
     # ----------- Params -----------#
     input_data_length = 54
     model_num = input('Press model number : ')
-    check_span = 40
+
+    #       Make folder      #
+    try:
+        os.mkdir('./Figure_data/%s_%s/' % (input_data_length, model_num))
+
+    except Exception as e:
+        pass
+    check_span = 30
     get_fig = 0
 
     Made_X = []
