@@ -24,7 +24,7 @@ with open("Keys.txt") as f:
 input_data_length = 54
 limit_line_low = 0.9
 limit_line_high = 0.9
-model_num = 6
+model_num = 10
 
 #       Trade Info      #
 #                                           Check money                                              #
@@ -46,12 +46,13 @@ while True:
                     if datetime.now().second >= 5:
                         break
 
-                #   proxy 설정으로 크롤링 우회한다.
+                #   User-Agent 설정으로 크롤링 우회한다.
                 print('Loading %s low_high' % Coin)
                 time.sleep(random.random() * 5)
                 X_test, buy_price = low_high(Coin, input_data_length)
 
                 #   ohlcv_data_length 가 100 이하이면 predict 하지 않는다.
+                #   ohlcv_data 의 price_gap 가 1.02 이하이면 predict 하지 않는다.
                 if X_test is not None:
                     Y_pred_low_ = model_low.predict(X_test, verbose=1)
                     max_value_low = np.max(Y_pred_low_[:, [-1]])
@@ -91,7 +92,7 @@ while True:
 
         # 매수 등록
         BuyOrder = bithumb.buy_limit_order(Coin, limit_buy_price, buyunit, "KRW")
-        print("      %s %s KRW 매수 등록      " % (Coin, limit_buy_price), end=' ')
+        print("    %s %s KRW 매수 등록    " % (Coin, limit_buy_price), end=' ')
         print(BuyOrder)
 
     except Exception as e:

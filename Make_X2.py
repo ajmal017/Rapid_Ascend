@@ -27,11 +27,28 @@ def low_high(Coin, input_data_length):
     #   Proxy 설정 해주기
     ohlcv_excel = pybithumb.get_ohlcv(Coin, 'KRW', 'minute1')
 
+    #   price_gap > 1.02
+    max_price = ohlcv_excel['high'].max()
+    min_price = ohlcv_excel['low'].min()
+    price_gap = max_price / min_price
+
+    if price_gap <= 1.02:
+        return None, None
+
+    obv = [0] * len(ohlcv_excel)
+    for m in range(1, len(ohlcv_excel)):
+        if ohlcv_excel['close'].iloc[m] > ohlcv_excel['close'].iloc[m - 1]:
+            obv[m] = obv[m - 1] + ohlcv_excel['volume'].iloc[m]
+        elif ohlcv_excel['close'].iloc[m] == ohlcv_excel['close'].iloc[m - 1]:
+            obv[m] = obv[m - 1]
+        else:
+            obv[m] = obv[m - 1] - ohlcv_excel['volume'].iloc[m]
+    ohlcv_excel['OBV'] = obv
+
     closeprice = ohlcv_excel['close'].iloc[-1]
-    ohlcv_excel['MA60'] = ohlcv_excel['close'].rolling(60).mean()
 
     # ----------- dataX, dataY 추출하기 -----------#
-    ohlcv_data = ohlcv_excel.values[ohlcv_excel['MA60'].isnull().sum():].astype(np.float)
+    ohlcv_data = ohlcv_excel.values[:].astype(np.float)
 
     # 결측 데이터 제외
     if len(ohlcv_data) != 0:
@@ -40,15 +57,15 @@ def low_high(Coin, input_data_length):
         #   Fixed X_data    #
         price = ohlcv_data[:, :4]
         volume = ohlcv_data[:, [4]]
-        MA60 = ohlcv_data[:, [-1]]
+        CMO = ohlcv_data[:, [-1]]
 
         scaled_price = min_max_scaler(price)
         scaled_volume = min_max_scaler(volume)
-        scaled_MA60 = min_max_scaler(MA60)
+        scaled_CMO = min_max_scaler(CMO)
         # print(scaled_MA60.shape)
 
-        x = np.concatenate((scaled_price, scaled_volume, scaled_MA60), axis=1)  # axis=1, 세로로 합친다
-        # print(x.shape, y.shape)  # (258, 6) (258, 1)
+        x = np.concatenate((scaled_price, scaled_volume, scaled_CMO), axis=1)  # axis=1, 세로로 합친다
+        # print(x.shape)  # (258, 6)
         # quit()
 
         dataX = []  # input_data length 만큼 담을 dataX 그릇
@@ -138,7 +155,7 @@ def made_x(file, input_data_length, model_num, check_span, get_fig):
         x = np.concatenate((scaled_price, scaled_volume, scaled_MA60), axis=1)  # axis=1, 세로로 합친다
         y_low = low_check
         y_high = high_check
-        # print(x.shape, y.shape)  # (258, 6) (258, 1)
+        # print(x.shape, y_low.shape)  # (258, 6) (258, 1)
         # quit()
 
         dataX = []  # input_data length 만큼 담을 dataX 그릇
@@ -237,10 +254,11 @@ if __name__ == '__main__':
 
     for file in ohlcv_list:
 
-        # if int(file.split()[0].split('-')[1]) == 1:
-        #     break
+        if int(file.split()[0].split('-')[1]) == 1:
+            continue
 
         result = made_x(file, input_data_length, model_num, check_span, get_fig)
+        # result = low_high('BTC', input_data_length)
 
         # ------------ 데이터가 있으면 dataX, dataY 병합하기 ------------#
         if result is not None:

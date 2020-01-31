@@ -9,7 +9,7 @@ warnings.filterwarnings("ignore")
 
 
 input_data_length = 54
-model_num = 7
+model_num = 11
 dir = './pred_ohlcv/%s_%s' % (input_data_length, model_num)
 ohlcv_list = os.listdir(dir)
 

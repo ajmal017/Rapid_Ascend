@@ -3,14 +3,14 @@ import re
 import os
 import pandas as pd
 from fake_useragent import UserAgent
+pd.set_option('display.max_rows', 1500)
 
+#
 Coins = pybithumb.get_tickers()
 
 for Coin in Coins:
     ohlcv_data = pybithumb.get_ohlcv(Coin, 'KRW', 'minute1')
-    ohlcv_data['fluc'] = ohlcv_data['high'] / ohlcv_data['low']
-    mean = ohlcv_data['fluc'].mean()
-    print(Coin, len(ohlcv_data), mean)
+    print(Coin, len(ohlcv_data))
 
 # ua = UserAgent()
 # for i in range(10):
@@ -53,4 +53,8 @@ from pandas.core.algorithms import value_counts
 
 # print('something in your', end=' ')
 # print('eyes')
-
+#
+# result_df = pd.read_excel('result_df.xlsx', index_col=0)
+# # result_df = result_df.sort
+# result_df = result_df.sort_values(by=['profit'], ascending=False)
+# result_df.to_excel('result_df.xlsx')

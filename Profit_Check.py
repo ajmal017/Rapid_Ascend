@@ -17,24 +17,25 @@ def profit_check(Date, model_num) :
 
     TotalProfits = 1.0
     profit_list = []
-    mean_list = []
+    gap_list = []
     for Coin in temp :
         try:
             df = pd.read_excel("./BackTest/" + "%s BackTest %s.xlsx" % (Date, Coin))
             Profits = df.Profits.cumprod().iloc[-1]
-            df['fluc'] = df['high'] / df['low']
-            mean = df['fluc'].mean()
+            max_price = df['high'].max()
+            min_price = df['low'].min()
+            price_gap = max_price / min_price
 
             if Profits > 1:
-                print(Coin, Profits)
+                print(Coin, Profits, price_gap)
 
             profit_list.append(Profits)
-            mean_list.append(mean)
+            gap_list.append(price_gap)
             TotalProfits *= Profits
         except Exception as e:
             print(e)
 
-    return TotalProfits, profit_list, mean_list
+    return TotalProfits, profit_list, gap_list
 
 
 input_data_length = 54
@@ -50,7 +51,16 @@ for file in ohlcv_list:
         Datelist.append(New_Date)
         Date = New_Date
 
+result_profit = []
+result_gap = []
 for Date in Datelist:
     print(Date)
-    res = profit_check(Date, model_num)
+    result = profit_check(Date, model_num)
+    result_profit += result[1]
+    result_gap += result[2]
+    # print(result_profit)
     print()
+
+result_df = pd.DataFrame({'profit':result_profit, 'gap':result_gap})
+result_df.to_excel('result_df.xlsx')
+print(result_df.info())
