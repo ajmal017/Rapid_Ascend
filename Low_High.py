@@ -120,6 +120,8 @@ while True:
             #   매수가 취소된 경우를 걸러주어야 한다.
             else:
                 if bithumb.get_outstanding_order(BuyOrder) is None:
+                    #   매수 체결을 인지 못하는 경우를 방지하기 위한 time.sleep()
+                    time.sleep(1 / 80)
                     #   체결량이 존재하는 경우는 buy_wait 까지 기다린다.
                     if (balance[0] - start_coin) * limit_buy_price > 1000:
                         pass

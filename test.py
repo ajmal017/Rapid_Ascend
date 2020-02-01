@@ -6,11 +6,11 @@ from fake_useragent import UserAgent
 pd.set_option('display.max_rows', 1500)
 
 #
-Coins = pybithumb.get_tickers()
-
-for Coin in Coins:
-    ohlcv_data = pybithumb.get_ohlcv(Coin, 'KRW', 'minute1')
-    print(Coin, len(ohlcv_data))
+# Coins = pybithumb.get_tickers()
+#
+# for Coin in Coins:
+#     ohlcv_data = pybithumb.get_ohlcv(Coin, 'KRW', 'minute1')
+#     print(Coin, len(ohlcv_data))
 
 # ua = UserAgent()
 # for i in range(10):
@@ -32,17 +32,17 @@ from pandas.core.algorithms import value_counts
 # df = pybithumb.get_ohlcv('FCT', 'KRW', 'minute1')
 # # df.to_excel(dir + '2020-01-29 FCT ohlcv.xlsx')
 # print(df)
-# with open("Keys.txt") as f:
-#     lines = f.readlines()
-#     key = lines[0].strip()
-#     secret = lines[1].strip()
-#     bithumb = pybithumb.Bithumb(key, secret)
+with open("Keys.txt") as f:
+    lines = f.readlines()
+    key = lines[0].strip()
+    secret = lines[1].strip()
+    bithumb = pybithumb.Bithumb(key, secret)
 #
 # import time
 #
 # while True:
 #     try:
-#         message = bithumb.get_balance('BTC')['message']
+print(bithumb.get_balance('BTC'))
 #         num_list = re.findall("\d+", message)
 #         print(int(num_list[0]) - int(num_list[1]))
 #         time.sleep(1)

@@ -57,14 +57,14 @@ def low_high(Coin, input_data_length):
         #   Fixed X_data    #
         price = ohlcv_data[:, :4]
         volume = ohlcv_data[:, [4]]
-        CMO = ohlcv_data[:, [-1]]
+        OBV = ohlcv_data[:, [-1]]
 
         scaled_price = min_max_scaler(price)
         scaled_volume = min_max_scaler(volume)
-        scaled_CMO = min_max_scaler(CMO)
+        scaled_OBV = min_max_scaler(OBV)
         # print(scaled_MA60.shape)
 
-        x = np.concatenate((scaled_price, scaled_volume, scaled_CMO), axis=1)  # axis=1, 세로로 합친다
+        x = np.concatenate((scaled_price, scaled_volume, scaled_OBV), axis=1)  # axis=1, 세로로 합친다
         # print(x.shape)  # (258, 6)
         # quit()
 
