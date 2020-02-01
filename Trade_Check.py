@@ -31,9 +31,11 @@ def dividing(Y_test):
 
 if __name__ == '__main__':
 
+    Coin = 'ETC'
     # input_data_length = int(input("Input Data Length : "))
     input_data_length = 54
-    model_num = input('Press model number : ')
+    # model_num = input('Press model number : ')
+    model_num = 10
 
     #       Make folder      #
     try:
@@ -46,7 +48,6 @@ if __name__ == '__main__':
     #           PARAMS           #
     check_span = 30
     get_fig = 1
-    Coin = 'REP'
 
     #       LOAD MODEL      #
     model_low = load_model('model/rapid_ascending_low %s_%s.hdf5' % (input_data_length, model_num))

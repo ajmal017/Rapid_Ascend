@@ -105,43 +105,41 @@ while True:
     Complete = 0
     while True:
         try:
-            balance = bithumb.get_balance(Coin)
-
             #       BuyOrder is dict / in Error 걸러주기        #
-            #   체결된 것 없나 확인하고
+            #       체결되어도 10분은 기다려야한다.
             if type(BuyOrder) != tuple:
-                print('BuyOrder is not tuple')
+                balance = bithumb.get_balance(Coin)
                 if (balance[0] - start_coin) * limit_buy_price > 1000:
-                    Complete = 1
-                    print("    매수 체결    ")
-                    CancelOrder = bithumb.cancel_order(BuyOrder)
-                break
+                    pass
+                else:
+                    print('BuyOrder is not tuple')
+                    break
 
             #   매수가 취소된 경우를 걸러주어야 한다.
             else:
                 if bithumb.get_outstanding_order(BuyOrder) is None:
-                    #   매수 체결을 인지 못하는 경우를 방지하기 위한 time.sleep()
-                    time.sleep(1 / 80)
+                    balance = bithumb.get_balance(Coin)
                     #   체결량이 존재하는 경우는 buy_wait 까지 기다린다.
                     if (balance[0] - start_coin) * limit_buy_price > 1000:
                         pass
                     else:
                         print("매수가 취소되었습니다.\n")
+                        break
 
             #   반 이상 체결된 경우 : 체결된 코인량이 매수 코인량의 반 이상인경우
-            if (balance[0] - start_coin) / buyunit >= 0.5:
-                Complete = 1
-                #   부분 체결되지 않은 미체결 잔량을 주문 취소
-                print("    매수 체결    ", end=' ')
-                CancelOrder = bithumb.cancel_order(BuyOrder)
-                print("부분 체결 :", CancelOrder)
-                print()
-                time.sleep(1 / 80)
-                break
+            # if (balance[0] - start_coin) / buyunit >= 0.5:
+            #     Complete = 1
+            #     #   부분 체결되지 않은 미체결 잔량을 주문 취소
+            #     print("    매수 체결    ", end=' ')
+            #     CancelOrder = bithumb.cancel_order(BuyOrder)
+            #     print("부분 체결 :", CancelOrder)
+            #     print()
+            #     time.sleep(1 / 80)
+            #     break
 
             #   최대 10분 동안 매수 체결을 대기한다.
             if time.time() - start > buy_wait * 60:
-
+                balance = bithumb.get_balance(Coin)
                 if (balance[0] - start_coin) * limit_buy_price > 1000:
                     Complete = 1
                     print("    매수 체결    ")
