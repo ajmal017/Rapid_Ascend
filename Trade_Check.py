@@ -1,49 +1,22 @@
 import os
 
-os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+# os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 
 import numpy as np
-import pandas as pd
 from keras.models import load_model
 from matplotlib import pyplot as plt
-import os
 from Make_X2 import low_high
-from keras.utils import np_utils
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-
-def dividing(Y_test):
-    if Y_test.shape[1] == 1:
-
-        np_one = np.ones((len(Y_test), 1))
-        np_zeros = np.zeros((len(Y_test), 1))
-
-        if np.sum(Y_test) != 0:
-            Y_test = np.concatenate((np_zeros, np_one), axis=1)
-
-        else:
-            Y_test = np.concatenate((np_one, np_zeros), axis=1)
-
-    return Y_test
-
-
 if __name__ == '__main__':
 
-    Coin = 'ETC'
+    Coin = input('Input Coin Name : ').upper()
     # input_data_length = int(input("Input Data Length : "))
     input_data_length = 54
     # model_num = input('Press model number : ')
     model_num = 10
-
-    #       Make folder      #
-    try:
-        os.mkdir('./pred_ohlcv/%s_%s/' % (input_data_length, model_num))
-        os.mkdir('./Figure_pred/%s_%s/' % (input_data_length, model_num))
-
-    except Exception as e:
-        pass
 
     #           PARAMS           #
     check_span = 30
@@ -54,13 +27,13 @@ if __name__ == '__main__':
     model_high = load_model('model/rapid_ascending_high %s_%s.hdf5' % (input_data_length, model_num))
 
     try:
-        X_test, _ = low_high(Coin, input_data_length)
+        X_test, _ = low_high(Coin, input_data_length, 1)
 
     except Exception as e:
         print('Error in getting data from made_x :', e)
 
     closeprice = np.roll(np.array(list(map(lambda x: x[-1][[1]][0], X_test))), -1)
-    MA60 = np.roll(np.array(list(map(lambda x: x[-1][[-1]][0], X_test))), -1)
+    OBV = np.roll(np.array(list(map(lambda x: x[-1][[-1]][0], X_test))), -1)
 
     # dataX 에 담겨있는 value 에 [-1] : 바로 이전의 행 x[-1][:].shape = (1, 6)
     # sliced_ohlcv = np.array(list(map(lambda x: x[-1][:], X_test)))
@@ -113,7 +86,7 @@ if __name__ == '__main__':
             plt.subplot(211)
             # plt.subplot(312)
             plt.plot(closeprice, 'r', label='close')
-            plt.plot(MA60, 'b', label='MA60')
+            plt.plot(OBV, 'b', label='OBV')
             plt.legend(loc='upper right')
             for i in range(len(spanlist_low)):
                 plt.axvspan(spanlist_low[i][0], spanlist_low[i][1], facecolor='m', alpha=0.5)
@@ -121,7 +94,7 @@ if __name__ == '__main__':
             plt.subplot(212)
             # plt.subplot(313)
             plt.plot(closeprice, 'r', label='close')
-            plt.plot(MA60, 'b', label='MA60')
+            plt.plot(OBV, 'b', label='OBV')
             plt.legend(loc='upper right')
             for i in range(len(spanlist_high)):
                 plt.axvspan(spanlist_high[i][0], spanlist_high[i][1], facecolor='c', alpha=0.5)

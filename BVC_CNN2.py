@@ -8,8 +8,8 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-input_data_length = 54
-model_num = 11
+input_data_length = 96
+model_num = 0
 dir = './pred_ohlcv/%s_%s' % (input_data_length, model_num)
 ohlcv_list = os.listdir(dir)
 
@@ -67,7 +67,7 @@ if __name__ == '__main__':
     wait_tick = 3
     over_tick = 10
 
-    pool = Pool(processes=16)
+    pool = Pool(processes=8)
     multi2 = partial(multi, wait_tick, over_tick)
     result = pool.map(multi2, [i for i in range(len(Datelist))])
     pool.close()

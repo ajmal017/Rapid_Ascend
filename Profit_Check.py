@@ -22,15 +22,13 @@ def profit_check(Date, model_num) :
         try:
             df = pd.read_excel("./BackTest/" + "%s BackTest %s.xlsx" % (Date, Coin))
             Profits = df.Profits.cumprod().iloc[-1]
-            max_price = df['high'].max()
-            min_price = df['low'].min()
-            price_gap = max_price / min_price
+            Price_gap = df.Price_gap.max()
 
             if Profits > 1:
-                print(Coin, Profits, price_gap)
+                print(Coin, Profits, Price_gap)
 
             profit_list.append(Profits)
-            gap_list.append(price_gap)
+            gap_list.append(Price_gap)
             TotalProfits *= Profits
         except Exception as e:
             print(e)
@@ -39,7 +37,7 @@ def profit_check(Date, model_num) :
 
 
 input_data_length = 54
-model_num = 7
+model_num = 10
 dir = './pred_ohlcv/{}_{}'.format(input_data_length, model_num)
 ohlcv_list = os.listdir(dir)
 
@@ -61,6 +59,6 @@ for Date in Datelist:
     # print(result_profit)
     print()
 
-result_df = pd.DataFrame({'profit':result_profit, 'gap':result_gap})
+result_df = pd.DataFrame({'profit': result_profit, 'gap': result_gap})
 result_df.to_excel('result_df.xlsx')
 print(result_df.info())

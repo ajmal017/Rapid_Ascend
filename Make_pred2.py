@@ -31,8 +31,9 @@ def dividing(Y_test):
 if __name__ == '__main__':
 
     # input_data_length = int(input("Input Data Length : "))
-    input_data_length = 54
-    model_num = input('Press model num : ')
+    input_data_length = 96
+    # model_num = input('Press model num : ')
+    model_num = 0
 
     #       Make folder      #
     try:
@@ -55,7 +56,7 @@ if __name__ == '__main__':
 
         # if file in except_list:
         #     continue
-        # file = '2020-01-29 FCT ohlcv.xlsx'
+        # file = '2020-01-11 FX ohlcv.xlsx'
 
         print('loading %s' % file)
 
@@ -69,8 +70,8 @@ if __name__ == '__main__':
             print('Error in getting data from made_x :', e)
             continue
 
-        closeprice = np.roll(np.array(list(map(lambda x: x[-1][1:2][0], X_test))), -1)
-        MA60 = np.roll(np.array(list(map(lambda x: x[-1][[5]][0], X_test))), -1)
+        closeprice = np.roll(np.array(list(map(lambda x: x[-1][[1]][0], X_test))), -1)
+        OBV = np.roll(np.array(list(map(lambda x: x[-1][[-1]][0], X_test))), -1)
 
         # dataX 에 담겨있는 value 에 [-1] : 바로 이전의 행 x[-1][:].shape = (1, 6)
         # sliced_ohlcv = np.array(list(map(lambda x: x[-1][:], X_test)))
@@ -117,7 +118,6 @@ if __name__ == '__main__':
             max_value_low = np.max(Y_pred_low_[:, [-1]])
             max_value_high = np.max(Y_pred_high_[:, [-1]])
 
-            # limit_line = 0.9
             limit_line_low = 0.9
             limit_line_high = 0.9
 
@@ -133,13 +133,13 @@ if __name__ == '__main__':
             sliced_Y_high = Y_pred_high.reshape(-1, 1)
             pred_ohlcv = np.concatenate((sliced_ohlcv, sliced_Y_low, sliced_Y_high), axis=1)
 
+            # print(pred_ohlcv)
+            # quit()
+
             # col 이 7이 아닌 데이터 걸러주기
             try:
-                pred_ohlcv_df = pd.DataFrame(pred_ohlcv, columns=['open', 'close', 'high', 'low', 'volume', 'MA60',
+                pred_ohlcv_df = pd.DataFrame(pred_ohlcv, columns=['open', 'close', 'high', 'low', 'volume', 'OBV',
                                                                   'low_check', 'high_check'])
-                # pred_ohlcv_df = pd.DataFrame(pred_ohlcv,
-                #                              columns=['open', 'close', 'high', 'low', 'volume', 'MA60', 'fluc_close',
-                #                                       'low_check', 'high_check'])
 
             except Exception as e:
                 print('Error in making dataframe :', e)
@@ -172,7 +172,7 @@ if __name__ == '__main__':
                 plt.subplot(211)
                 # plt.subplot(312)
                 plt.plot(closeprice, 'r', label='close')
-                plt.plot(MA60, 'b', label='MA60')
+                plt.plot(OBV, 'b', label='OBV')
                 plt.legend(loc='upper right')
                 for i in range(len(spanlist_low)):
                     plt.axvspan(spanlist_low[i][0], spanlist_low[i][1], facecolor='m', alpha=0.5)
@@ -180,7 +180,7 @@ if __name__ == '__main__':
                 plt.subplot(212)
                 # plt.subplot(313)
                 plt.plot(closeprice, 'r', label='close')
-                plt.plot(MA60, 'b', label='MA60')
+                plt.plot(OBV, 'b', label='OBV')
                 plt.legend(loc='upper right')
                 for i in range(len(spanlist_high)):
                     plt.axvspan(spanlist_high[i][0], spanlist_high[i][1], facecolor='c', alpha=0.5)
@@ -189,6 +189,7 @@ if __name__ == '__main__':
                 Coin = file.split()[1].split('.')[0]
                 plt.savefig('./Figure_pred/%s_%s/%s %s.png' % (input_data_length, model_num, Date, Coin), dpi=500)
                 plt.close()
+                quit()
 
 
 

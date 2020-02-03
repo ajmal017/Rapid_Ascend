@@ -22,17 +22,15 @@ def min_max_scaler(price):
     return Scaler.transform(price)
 
 
-def low_high(Coin, input_data_length):
+def low_high(Coin, input_data_length, trade_limit=0):
 
-    #   Proxy 설정 해주기
+    #   거래 제한은 고점과 저점을 분리한다.
+
+    #   User-Agent Configuration
     ohlcv_excel = pybithumb.get_ohlcv(Coin, 'KRW', 'minute1')
 
-    #   price_gap > 1.02
-    max_price = ohlcv_excel['high'].max()
-    min_price = ohlcv_excel['low'].min()
-    price_gap = max_price / min_price
-
-    if price_gap <= 1.02:
+    price_gap = ohlcv_excel.close.max() / ohlcv_excel.close.min()
+    if (price_gap < 1.07) and (trade_limit == 1):
         return None, None
 
     obv = [0] * len(ohlcv_excel)
@@ -48,7 +46,8 @@ def low_high(Coin, input_data_length):
     closeprice = ohlcv_excel['close'].iloc[-1]
 
     # ----------- dataX, dataY 추출하기 -----------#
-    ohlcv_data = ohlcv_excel.values[:].astype(np.float)
+    #   OBV :
+    ohlcv_data = ohlcv_excel.values[1:].astype(np.float)
 
     # 결측 데이터 제외
     if len(ohlcv_data) != 0:
@@ -65,6 +64,10 @@ def low_high(Coin, input_data_length):
         # print(scaled_MA60.shape)
 
         x = np.concatenate((scaled_price, scaled_volume, scaled_OBV), axis=1)  # axis=1, 세로로 합친다
+
+        if (x[-1][1] > 0.3) and (trade_limit == 1):
+            return None, None
+
         # print(x.shape)  # (258, 6)
         # quit()
 
@@ -73,7 +76,7 @@ def low_high(Coin, input_data_length):
             group_x = x[i - input_data_length:i]
             dataX.append(group_x)  # dataX 리스트에 추가
 
-        if len(dataX) < 100:
+        if (len(dataX) < 100) and (trade_limit == 1):
             return None, None
 
         X_test = np.array(dataX)
@@ -89,10 +92,18 @@ def made_x(file, input_data_length, model_num, check_span, get_fig):
 
     ohlcv_excel = pd.read_excel(dir + file, index_col=0)
 
-    ohlcv_excel['MA60'] = ohlcv_excel['close'].rolling(60).mean()
+    obv = [0] * len(ohlcv_excel)
+    for m in range(1, len(ohlcv_excel)):
+        if ohlcv_excel['close'].iloc[m] > ohlcv_excel['close'].iloc[m - 1]:
+            obv[m] = obv[m - 1] + ohlcv_excel['volume'].iloc[m]
+        elif ohlcv_excel['close'].iloc[m] == ohlcv_excel['close'].iloc[m - 1]:
+            obv[m] = obv[m - 1]
+        else:
+            obv[m] = obv[m - 1] - ohlcv_excel['volume'].iloc[m]
+    ohlcv_excel['OBV'] = obv
+
     #   이후 check_span 데이터와 현재 포인트를 비교해서 현재 포인트가 저가인지 고가인지 예측한다.
     #   최대 3개의 중복 값을 허용한다.
-
     #   고저점을 잡아주는 함수 구현
     list_low_check = [np.NaN] * len(ohlcv_excel)
     list_high_check = [np.NaN] * len(ohlcv_excel)
@@ -117,16 +128,13 @@ def made_x(file, input_data_length, model_num, check_span, get_fig):
     ohlcv_excel['high_check'] = list_high_check
 
     # ----------- dataX, dataY 추출하기 -----------#
-    # print(ohlcv_excel)
+    # print(ohlcv_excel.info())
     # ohlcv_excel.to_excel('test.xlsx')
-    # return
+    # quit()
 
     # NaN 제외하고 데이터 자르기 (데이터가 PIXEL 로 들어간다고 생각하면 된다)
-    # MA60 부터 FLUC_CLOSE, 존재하는 값만 슬라이싱
-    if check_span < 60:
-        ohlcv_data = ohlcv_excel.values[ohlcv_excel['MA60'].isnull().sum(): -check_span].astype(np.float)
-    else:
-        ohlcv_data = ohlcv_excel.values[check_span: -check_span].astype(np.float)
+    #   OBV : -CHECK_SPAN
+    ohlcv_data = ohlcv_excel.values[1: -check_span].astype(np.float)
     # print(pd.DataFrame(ohlcv_data).info())
     # print(pd.DataFrame(ohlcv_data).to_excel('test.xlsx'))
     # print(list(map(float, ohlcv_data[0])))
@@ -139,8 +147,7 @@ def made_x(file, input_data_length, model_num, check_span, get_fig):
         #   Fixed X_data    #
         price = ohlcv_data[:, :4]
         volume = ohlcv_data[:, [4]]
-        # CMO = ohlcv_data[:, [-5]]
-        MA60 = ohlcv_data[:, [-3]]
+        OBV = ohlcv_data[:, [-3]]
 
         #   Flexible Y_data    #
         low_check = ohlcv_data[:, [-2]]
@@ -148,11 +155,9 @@ def made_x(file, input_data_length, model_num, check_span, get_fig):
 
         scaled_price = min_max_scaler(price)
         scaled_volume = min_max_scaler(volume)
-        # scaled_CMO = min_max_scaler(CMO)
-        scaled_MA60 = min_max_scaler(MA60)
-        # print(scaled_MA60.shape)
+        scaled_OBV = min_max_scaler(OBV)
 
-        x = np.concatenate((scaled_price, scaled_volume, scaled_MA60), axis=1)  # axis=1, 세로로 합친다
+        x = np.concatenate((scaled_price, scaled_volume, scaled_OBV), axis=1)  # axis=1, 세로로 합친다
         y_low = low_check
         y_high = high_check
         # print(x.shape, y_low.shape)  # (258, 6) (258, 1)
@@ -210,14 +215,14 @@ def made_x(file, input_data_length, model_num, check_span, get_fig):
 
             plt.subplot(211)
             plt.plot(min_max_scaler(ohlcv_data[:, 1:2]), 'r', label='close')
-            plt.plot(scaled_MA60, 'b', label='MA60')
+            plt.plot(scaled_OBV, 'b', label='MA60')
             plt.legend(loc='upper right')
             for i in range(len(spanlist_low)):
                 plt.axvspan(spanlist_low[i][0], spanlist_low[i][1], facecolor='m', alpha=0.5)
 
             plt.subplot(212)
             plt.plot(min_max_scaler(ohlcv_data[:, 1:2]), 'r', label='close')
-            plt.plot(scaled_MA60, 'b', label='MA60')
+            plt.plot(scaled_OBV, 'b', label='MA60')
             plt.legend(loc='upper right')
             for i in range(len(spanlist_high)):
                 plt.axvspan(spanlist_high[i][0], spanlist_high[i][1], facecolor='c', alpha=0.5)
@@ -257,8 +262,11 @@ if __name__ == '__main__':
         if int(file.split()[0].split('-')[1]) == 1:
             continue
 
+        # file = '2019-10-27 LAMB ohlcv.xlsx'
+
         result = made_x(file, input_data_length, model_num, check_span, get_fig)
-        # result = low_high('BTC', input_data_length)
+        # result = low_high('FX', input_data_length)
+        # quit()
 
         # ------------ 데이터가 있으면 dataX, dataY 병합하기 ------------#
         if result is not None:
@@ -275,7 +283,7 @@ if __name__ == '__main__':
     Y_low = np.array(Made_Y_low)
     Y_high = np.array(Made_Y_high)
 
-    np.save('./Made_X/Made_X %s_%s' % (input_data_length, model_num), X)
-    np.save('./Made_X_low/Made_Y %s_%s' % (input_data_length, model_num), Y_low)
-    np.save('./Made_X_high/Made_Y %s_%s' % (input_data_length, model_num), Y_high)
+    # np.save('./Made_X/Made_X %s_%s' % (input_data_length, model_num), X)
+    # np.save('./Made_X_low/Made_Y %s_%s' % (input_data_length, model_num), Y_low)
+    # np.save('./Made_X_high/Made_Y %s_%s' % (input_data_length, model_num), Y_high)
 

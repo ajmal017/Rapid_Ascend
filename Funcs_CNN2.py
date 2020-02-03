@@ -381,9 +381,9 @@ def profitage(Coin, input_data_length, model_num, wait_tick=3, over_tick=10, Dat
 
     # 병합할 dataframe 초기화
     bprelay = pd.DataFrame(index=np.arange(len(df)), columns=['bprelay'])
-    # dfsp = pd.DataFrame(index=np.arange(len(df)), columns=['SPP'])
     condition = pd.DataFrame(index=np.arange(len(df)), columns=["Condition"])
     Profits = pd.DataFrame(index=np.arange(len(df)), columns=["Profits"])
+    price_point = pd.DataFrame(index=np.arange(len(df)), columns=['Price_point'])
 
     Profits.Profits = 1.0
     Minus_Profits = 1.0
@@ -518,12 +518,16 @@ def profitage(Coin, input_data_length, model_num, wait_tick=3, over_tick=10, Dat
                 except Exception as e:
                     pass
 
+                if float(Profits.iloc[m]) > 1.05:
+                    price_point.iloc[m] = df['high'][:start_m].max() / df['low'][:start_m].min()
+
         # 체결시 재시작
         m += 1
 
     df = pd.merge(df, bprelay, how='outer', left_index=True, right_index=True)
     df = pd.merge(df, condition, how='outer', left_index=True, right_index=True)
     df = pd.merge(df, Profits, how='outer', left_index=True, right_index=True)
+    df = pd.merge(df, price_point, how='outer', left_index=True, right_index=True)
 
     if excel == 1:
         df.to_excel("./BackTest/%s BackTest %s.xlsx" % (Date, Coin))
@@ -546,10 +550,11 @@ if __name__=="__main__":
     Coin = excel_file.split()[1].split('.')[0]
     Date = excel_file.split()[0]
     input_data_length = 54
-    model_num = input('Press model num : ')
+    # model_num = input('Press model num : ')
+    model_num = 10
     wait_tick = 3
     over_tick = 10
     ######################################################################
 
-    print(profitage(Coin, input_data_length, model_num, wait_tick, over_tick, Date, 0))
+    print(profitage(Coin, input_data_length, model_num, wait_tick, over_tick, Date, 1))
 

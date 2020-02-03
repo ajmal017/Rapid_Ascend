@@ -49,10 +49,13 @@ while True:
                 #   User-Agent 설정으로 크롤링 우회한다.
                 print('Loading %s low_high' % Coin)
                 time.sleep(random.random() * 5)
-                X_test, buy_price = low_high(Coin, input_data_length)
 
-                #   ohlcv_data_length 가 100 이하이면 predict 하지 않는다.
+                #               predict 조건              #
                 #   ohlcv_data 의 price_gap 가 1.02 이하이면 predict 하지 않는다.
+                #   closeprice 가 MinMaxScaler() 로 0.3 보다 크면 predict 하지 않는다.
+                #   ohlcv_data_length 가 100 이하이면 predict 하지 않는다.
+                X_test, buy_price = low_high(Coin, input_data_length, 1)  # low_predict 에서만 trade_limit == 1
+
                 if X_test is not None:
                     Y_pred_low_ = model_low.predict(X_test, verbose=1)
                     max_value_low = np.max(Y_pred_low_[:, [-1]])
@@ -162,6 +165,7 @@ while True:
                                 CancelOrder = bithumb.cancel_order(BuyOrder)
                             else:
                                 print("미체결 또는 체결량 1000 KRW 이하\n")
+                                print()
                     else:
                         if type(BuyOrder) == tuple:
                             CancelOrder = bithumb.cancel_order(BuyOrder)
@@ -296,10 +300,10 @@ while True:
                                 # elif sell_switch == 0:
                                 #     sppswitch = 1
                                     time.sleep(random.random() * 5)
-                                continue  # 지정 매도 재등록 완료하면 다시 현재가 비교로
+                                continue
 
                         except Exception as e:
-                            print('SellOrder == tuple, str? 에서 에러발생 :', e)
+                            print('SellOrder in [tuple, str] ? 에서 에러발생 :', e)
                             time.sleep(random.random() * 5)  # 서버 에러인 경우
                             continue
 
