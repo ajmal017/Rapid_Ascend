@@ -534,6 +534,9 @@ def profitage(Coin, input_data_length, model_num, wait_tick=3, over_tick=10, Dat
 
     profits = Profits.cumprod()  # 해당 열까지의 누적 곱!
 
+    if np.isnan(profits.iloc[-1].item()):
+        return 1.0, 1.0, 1.0
+
     # [-1] 을 사용하려면 데이터가 존재해야 되는데 데이터 전체가 결측치인 경우가 존재한다.
     if len(profits) == 0:
         return 1.0, 1.0, 1.0
@@ -551,7 +554,7 @@ if __name__=="__main__":
     Date = excel_file.split()[0]
     input_data_length = 54
     # model_num = input('Press model num : ')
-    model_num = 10
+    model_num = 13
     wait_tick = 3
     over_tick = 10
     ######################################################################

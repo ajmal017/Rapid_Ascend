@@ -24,10 +24,11 @@ with open("Keys.txt") as f:
 input_data_length = 54
 limit_line_low = 0.9
 limit_line_high = 0.9
-model_num = 10
+model_num = 15
 
 #       Trade Info      #
-#                                           Check money                                              #
+#                                           Check The Money                                              #
+CoinVolume = 10
 buy_wait = 10
 Profits = 1.0
 
@@ -37,10 +38,34 @@ model_high = load_model('./model/rapid_ascending_high %s_%s.hdf5' % (input_data_
 
 while True:
 
+    #               Finding Buy Signal              #
     while True:
-        #   이전 ohlcv 데이터로 low_check prediction 결과값이 1 이면, 매수 등록 진행
-        for Coin in pybithumb.get_tickers():
 
+        #           Making TopCoin List         #
+        Coinlist = pybithumb.get_tickers()
+        Fluclist = []
+        while True:
+            try:
+                for Coin in Coinlist:
+                    tickerinfo = pybithumb.PublicApi.ticker(Coin)
+                    data = tickerinfo['data']
+                    fluctate = data['fluctate_rate_24H']
+                    Fluclist.append(fluctate)
+                    time.sleep(1 / 90)
+                break
+
+            except Exception as e:
+                Fluclist.append(None)
+                print('Error in making Topcoin :', e)
+
+        Fluclist = list(map(float, Fluclist))
+        series = pd.Series(Fluclist, Coinlist)
+        series = series.sort_values(ascending=False)
+
+        series = series[0:CoinVolume]
+        TopCoin = list(series.index)
+
+        for Coin in TopCoin:
             try:
                 while True:
                     if datetime.now().second >= 5:
@@ -51,10 +76,10 @@ while True:
                 time.sleep(random.random() * 5)
 
                 #               predict 조건              #
-                #   ohlcv_data 의 price_gap 가 1.02 이하이면 predict 하지 않는다.
+                #   ohlcv_data 의 price_gap 가 1.07 이하이면 predict 하지 않는다.
                 #   closeprice 가 MinMaxScaler() 로 0.3 보다 크면 predict 하지 않는다.
                 #   ohlcv_data_length 가 100 이하이면 predict 하지 않는다.
-                X_test, buy_price = low_high(Coin, input_data_length, 1)  # low_predict 에서만 trade_limit == 1
+                X_test, buy_price = low_high(Coin, input_data_length)  # TopCoin 으로 제약조건을 걸어서 trade_limit==0
 
                 if X_test is not None:
                     Y_pred_low_ = model_low.predict(X_test, verbose=1)

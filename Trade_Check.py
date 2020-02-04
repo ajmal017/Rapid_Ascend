@@ -4,9 +4,12 @@ import os
 # os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 
 import numpy as np
+from pandas import Series
 from keras.models import load_model
 from matplotlib import pyplot as plt
 from Make_X2 import low_high
+import pybithumb
+import time
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -27,7 +30,7 @@ if __name__ == '__main__':
     model_high = load_model('model/rapid_ascending_high %s_%s.hdf5' % (input_data_length, model_num))
 
     try:
-        X_test, _ = low_high(Coin, input_data_length, 1)
+        X_test, _ = low_high(Coin, input_data_length)
 
     except Exception as e:
         print('Error in getting data from made_x :', e)
