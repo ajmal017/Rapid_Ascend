@@ -24,7 +24,7 @@ with open("Keys.txt") as f:
 input_data_length = 54
 limit_line_low = 0.9
 limit_line_high = 0.9
-model_num = 15
+model_num = 16
 
 #       Trade Info      #
 #                                           Check The Money                                              #
