@@ -1,17 +1,30 @@
 import pybithumb
-import re
-import os
 import pandas as pd
 from fake_useragent import UserAgent
+import time
 pd.set_option('display.max_rows', 1500)
 
+
+# start_time = time.time()
+# pybithumb.get_ohlcv('BTC', 'KRW', 'minute1')
+# print(time.time() - start_time)
+# for i in range(10):
+#     start_time = time.time()
+#     print(pybithumb.get_ohlcv('BTC', 'KRW', 'minute1'))
+#     print(time.time() - start_time)
+
+from datetime import datetime
+print(datetime.now().date())
+
+
+
 #
-Coins = pybithumb.get_tickers()
-# #
-for Coin in Coins:
-    Coin = 'MTL'
-    ohlcv_data = pybithumb.get_ohlcv(Coin, 'KRW', 'minute1')
-    print(Coin, ohlcv_data.close.max() / ohlcv_data.close.min(), len(ohlcv_data))
+# Coins = pybithumb.get_tickers()
+# # #
+# for Coin in Coins:
+#     Coin = 'MTL'
+#     ohlcv_data = pybithumb.get_ohlcv(Coin, 'KRW', 'minute1')
+#     print(Coin, ohlcv_data.close.max() / ohlcv_data.close.min(), len(ohlcv_data))
 
 # list = [1, 1, 1]
 # print(set(list))

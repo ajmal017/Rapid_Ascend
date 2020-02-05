@@ -85,15 +85,6 @@ if __name__ == '__main__':
                 else:
                     Y_test = np.concatenate((np_one, np_zeros), axis=1)
 
-            try:
-                loss = model.evaluate(X_test, Y_test)
-                print("Test Loss " + str(loss[0]))
-                print("Test Acc: " + str(loss[1]))
-
-            except Exception as e:
-                print(e)
-                continue
-
             Y_pred_ = model.predict(X_test, verbose=1)
 
             max_value = np.max(Y_pred_[:, [-1]])

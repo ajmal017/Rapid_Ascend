@@ -28,7 +28,7 @@ model_num = 16
 
 #       Trade Info      #
 #                                           Check The Money                                              #
-CoinVolume = 10
+CoinVolume = 15
 buy_wait = 10
 Profits = 1.0
 
@@ -62,7 +62,7 @@ while True:
         series = pd.Series(Fluclist, Coinlist)
         series = series.sort_values(ascending=False)
 
-        series = series[0:CoinVolume]
+        series = series[:CoinVolume]
         TopCoin = list(series.index)
 
         for Coin in TopCoin:
@@ -71,7 +71,7 @@ while True:
                     if datetime.now().second >= 5:
                         break
 
-                #   User-Agent 설정으로 크롤링 우회한다.
+                #   User-Agent 설정 & IP 변경으로 크롤링 우회한다.
                 print('Loading %s low_high' % Coin)
                 time.sleep(random.random() * 5)
 
@@ -79,7 +79,10 @@ while True:
                 #   ohlcv_data 의 price_gap 가 1.07 이하이면 predict 하지 않는다.
                 #   closeprice 가 MinMaxScaler() 로 0.3 보다 크면 predict 하지 않는다.
                 #   ohlcv_data_length 가 100 이하이면 predict 하지 않는다.
-                X_test, buy_price = low_high(Coin, input_data_length)  # TopCoin 으로 제약조건을 걸어서 trade_limit==0
+                if (datetime.now().minute % 5) in [0, 1, 2]:
+                    X_test, buy_price = low_high(Coin, input_data_length)  # TopCoin 으로 제약조건을 걸어서 trade_limit==0
+                else:
+                    X_test, buy_price = low_high(Coin, input_data_length, 'proxyison')
 
                 if X_test is not None:
                     Y_pred_low_ = model_low.predict(X_test, verbose=1)

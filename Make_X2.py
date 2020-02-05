@@ -5,6 +5,7 @@ import os
 import matplotlib.pyplot as plt
 import warnings
 from sklearn.preprocessing import MinMaxScaler
+from datetime import datetime
 warnings.filterwarnings("ignore")
 pd.set_option('display.max_rows', 500)
 
@@ -22,15 +23,19 @@ def min_max_scaler(price):
     return Scaler.transform(price)
 
 
-def low_high(Coin, input_data_length, trade_limit=0):
+def low_high(Coin, input_data_length, ip_limit=None, trade_limit=None):
 
     #   거래 제한은 고점과 저점을 분리한다.
 
     #   User-Agent Configuration
-    ohlcv_excel = pybithumb.get_ohlcv(Coin, 'KRW', 'minute1')
+    #   IP - Change
+    if ip_limit is None:
+        ohlcv_excel = pybithumb.get_ohlcv(Coin, 'KRW', 'minute1')
+    else:
+        ohlcv_excel = pybithumb.get_ohlcv(Coin, 'KRW', 'minute1', 'proxyon')
 
     price_gap = ohlcv_excel.close.max() / ohlcv_excel.close.min()
-    if (price_gap < 1.07) and (trade_limit == 1):
+    if (price_gap < 1.07) and (trade_limit is not None):
         return None, None
 
     obv = [0] * len(ohlcv_excel)
@@ -65,7 +70,7 @@ def low_high(Coin, input_data_length, trade_limit=0):
 
         x = np.concatenate((scaled_price, scaled_volume, scaled_OBV), axis=1)  # axis=1, 세로로 합친다
 
-        if (x[-1][1] > 0.3) and (trade_limit == 1):
+        if (x[-1][1] > 0.3) and (trade_limit is not None):
             return None, None
 
         # print(x.shape)  # (258, 6)
@@ -76,7 +81,7 @@ def low_high(Coin, input_data_length, trade_limit=0):
             group_x = x[i - input_data_length:i]
             dataX.append(group_x)  # dataX 리스트에 추가
 
-        if (len(dataX) < 100) and (trade_limit == 1):
+        if (len(dataX) < 100) and (trade_limit is not None):
             return None, None
 
         X_test = np.array(dataX)

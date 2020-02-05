@@ -4,6 +4,7 @@ import os
 import matplotlib.pyplot as plt
 import warnings
 from sklearn.preprocessing import MinMaxScaler
+import pybithumb
 warnings.filterwarnings("ignore")
 pd.set_option('display.max_rows', 500)
 
@@ -21,6 +22,76 @@ def min_max_scaler(price):
     return Scaler.transform(price)
 
 
+def low_high(Coin, input_data_length, trade_limit=None):
+
+    #   거래 제한은 고점과 저점을 분리한다.
+
+    #   User-Agent Configuration
+    ohlcv_excel = pybithumb.get_ohlcv(Coin, 'KRW', 'minute1')
+
+    price_gap = ohlcv_excel.close.max() / ohlcv_excel.close.min()
+    if (price_gap < 1.07) and (trade_limit is not None):
+        return None, None
+
+    obv = [0] * len(ohlcv_excel)
+    for m in range(1, len(ohlcv_excel)):
+        if ohlcv_excel['close'].iloc[m] > ohlcv_excel['close'].iloc[m - 1]:
+            obv[m] = obv[m - 1] + ohlcv_excel['volume'].iloc[m]
+        elif ohlcv_excel['close'].iloc[m] == ohlcv_excel['close'].iloc[m - 1]:
+            obv[m] = obv[m - 1]
+        else:
+            obv[m] = obv[m - 1] - ohlcv_excel['volume'].iloc[m]
+    ohlcv_excel['OBV'] = obv
+
+    ohlcv_excel['MA60'] = ohlcv_excel['close'].rolling(60).mean()
+
+    closeprice = ohlcv_excel['close'].iloc[-1]
+
+    # ----------- dataX, dataY 추출하기 -----------#
+    #   OBV :
+    ohlcv_data = ohlcv_excel.values[1:].astype(np.float)
+
+    # 결측 데이터 제외
+    if len(ohlcv_data) != 0:
+
+        #          데이터 전처리         #
+        #   Fixed X_data    #
+        price = ohlcv_data[:, :4]
+        volume = ohlcv_data[:, [4]]
+        OBV = ohlcv_data[:, [-2]]
+        MA60 = ohlcv_data[:, [-1]]
+
+        scaled_price = min_max_scaler(price)
+        scaled_volume = min_max_scaler(volume)
+        scaled_OBV = min_max_scaler(OBV)
+        scaled_MA60 = min_max_scaler(MA60)
+        # print(scaled_MA60.shape)
+
+        x = np.concatenate((scaled_price, scaled_volume, scaled_MA60), axis=1)  # axis=1, 세로로 합친다
+
+        if (x[-1][1] > 0.3) and (trade_limit is not None):
+            return None, None
+
+        # print(x.shape)  # (258, 6)
+        # quit()
+
+        dataX = []  # input_data length 만큼 담을 dataX 그릇
+        for i in range(input_data_length, len(ohlcv_data) + 1):  # 마지막 데이터까지 다 긇어모은다.
+            group_x = x[i - input_data_length:i]
+            dataX.append(group_x)  # dataX 리스트에 추가
+
+        if (len(dataX) < 100) and (trade_limit is not None):
+            return None, None
+
+        X_test = np.array(dataX)
+        row = X_test.shape[1]
+        col = X_test.shape[2]
+
+        X_test = X_test.astype('float32').reshape(-1, row, col, 1)
+
+        return X_test, closeprice
+
+
 def made_x(file, input_data_length, model_num, check_span, Range_fluc, get_fig):
 
     ohlcv_excel = pd.read_excel(dir + file, index_col=0)
@@ -36,8 +107,11 @@ def made_x(file, input_data_length, model_num, check_span, Range_fluc, get_fig):
     ohlcv_excel['OBV'] = obv
 
     ohlcv_excel['MA60'] = ohlcv_excel['close'].rolling(60).mean()
-    # 이후 10개 CLOSE 데이터의 MAX / 현재 POINT 의 이전 CLOSE
-    ohlcv_excel['fluc_close'] = ohlcv_excel['close'].shift(-check_span).rolling(check_span).max() / ohlcv_excel['close'].shift(1)
+
+    # 이후 check_span 개 데이터의 고 / 저점의 폭
+    ohlcv_excel['fluc_close'] = ohlcv_excel['close'].shift(-check_span).rolling(check_span).max() / \
+                                ohlcv_excel['close'].shift(-check_span).rolling(check_span).min()
+    ohlcv_excel['fluc_close'] = np.where(ohlcv_excel['fluc_close'] > Range_fluc, 1, 0)
 
     # ----------- dataX, dataY 추출하기 -----------#
     # print(ohlcv_excel.tail(20))
@@ -53,22 +127,25 @@ def made_x(file, input_data_length, model_num, check_span, Range_fluc, get_fig):
     # 결측 데이터 제외
     if len(ohlcv_data) != 0:
 
-        # ----- 데이터 전처리 -----#
+        #           데이터 전처리         #
+        #       x data      #
         price = ohlcv_data[:, :4]
         volume = ohlcv_data[:, [4]]
+        OBV = ohlcv_data[:, [-3]]
         MA60 = ohlcv_data[:, [-2]]
+
+        #       y data      #
         fluc_close = ohlcv_data[:, [-1]]
 
         scaled_price = min_max_scaler(price)
         scaled_volume = min_max_scaler(volume)
+        scaled_OBV = min_max_scaler(OBV)
         scaled_MA60 = min_max_scaler(MA60)
         # print(scaled_MA60.shape)
 
-        fluc_close = np.array(list(map(lambda x: 1 if x > Range_fluc else 0, fluc_close)))
-        fluc_close = fluc_close.reshape(-1, 1)
         # print(fluc_close.shape)
 
-        x = np.concatenate((scaled_price, scaled_volume, scaled_MA60), axis=1)  # axis=1, 세로로 합친다
+        x = np.concatenate((scaled_price, scaled_volume, scaled_OBV), axis=1)  # axis=1, 세로로 합친다
         y = fluc_close
         # print(x.shape, y.shape)  # (258, 6) (258, 1)
         # quit()
