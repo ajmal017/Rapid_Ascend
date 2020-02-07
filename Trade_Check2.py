@@ -9,35 +9,45 @@ from keras.models import load_model
 from matplotlib import pyplot as plt
 from Make_X2 import low_high
 from datetime import datetime
-
+import pybithumb
+import time
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
+
+def classifier(Y_pred_):
+    max_value = np.max(Y_pred_, axis=0)
+    Y_pred_[0] = Y_pred_[0] / max_value[0]
+    Y_pred_[1] = Y_pred_[1] / max_value[1]
+
+    return Y_pred_
+
 
 if __name__ == '__main__':
 
     #           Making TopCoin List         #
-    # Coinlist = pybithumb.get_tickers()
-    # Fluclist = []
-    # while True:
-    #     try:
-    #         for Coin in Coinlist:
-    #             tickerinfo = pybithumb.PublicApi.ticker(Coin)
-    #             data = tickerinfo['data']
-    #             fluctate = data['fluctate_rate_24H']
-    #             Fluclist.append(fluctate)
-    #             time.sleep(1 / 90)
-    #         break
-    #
-    #     except Exception as e:
-    #         Fluclist.append(None)
-    #         print('Error in making Topcoin :', e)
-    #
-    # Fluclist = list(map(float, Fluclist))
-    # series = pd.Series(Fluclist, Coinlist)
-    # series = series.sort_values(ascending=False)
-    #
-    # series = series[0:10]
-    # TopCoin = list(series.index)
-    TopCoin = [input('Input Coin Name : ').upper()]
+    Coinlist = pybithumb.get_tickers()
+    Fluclist = []
+    while True:
+        try:
+            for Coin in Coinlist:
+                tickerinfo = pybithumb.PublicApi.ticker(Coin)
+                data = tickerinfo['data']
+                fluctate = data['fluctate_rate_24H']
+                Fluclist.append(fluctate)
+                time.sleep(1 / 90)
+            break
+
+        except Exception as e:
+            Fluclist.append(None)
+            print('Error in making Topcoin :', e)
+
+    Fluclist = list(map(float, Fluclist))
+    series = pd.Series(Fluclist, Coinlist)
+    series = series.sort_values(ascending=False)
+
+    series = series[0:10]
+    TopCoin = list(series.index)
+    # TopCoin = [input('Input Coin Name : ').upper()]
 
     for Coin in TopCoin:
         # Coin = input('Input Coin Name : ').upper()
@@ -55,7 +65,7 @@ if __name__ == '__main__':
         model_high = load_model('model/rapid_ascending_high %s_%s.hdf5' % (input_data_length, model_num))
 
         try:
-            X_test, _ = low_high(Coin, input_data_length)
+            X_test, _ = low_high(Coin, input_data_length, 'proxy')
 
         except Exception as e:
             print('Error in getting data from made_x :', e)
@@ -75,15 +85,19 @@ if __name__ == '__main__':
             Y_pred_high_ = model_high.predict(X_test, verbose=1)
 
             # max_value = np.max(Y_pred_[:, [-1]])
-            max_value_low = np.max(Y_pred_low_[:, [-1]])
-            max_value_high = np.max(Y_pred_high_[:, [-1]])
+            Y_pred_low = np.array(list(map(classifier, Y_pred_low_)))
+            Y_pred_low = np.argmax(Y_pred_low, axis=1)
+            print(Y_pred_low)
+            quit()
+            Y_pred_high = np.array(list(map(classifier, Y_pred_high_)))
+            Y_pred_high = np.argmax(Y_pred_high, axis=1)
 
             # limit_line = 0.9
-            limit_line_low = 0.9
-            limit_line_high = 0.9
-
-            Y_pred_low = np.where(Y_pred_low_[:, [-1]] > max_value_low * limit_line_low, 1, 0)
-            Y_pred_high = np.where(Y_pred_high_[:, [-1]] > max_value_high * limit_line_high, 1, 0)
+            # limit_line_low = 0.9
+            # limit_line_high = 0.9
+            #
+            # Y_pred_low = np.where(Y_pred_low_[:, [-1]] > max_value_low * limit_line_low, 1, 0)
+            # Y_pred_high = np.where(Y_pred_high_[:, [-1]] > max_value_high * limit_line_high, 1, 0)
 
             #       Save Pred_ohlcv      #
             # 기존에 pybithumb 을 통해서 제공되던 ohlcv 와는 조금 다르다 >> 이전 데이터와 현재 y 데이터 행이 같다.

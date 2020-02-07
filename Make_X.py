@@ -27,7 +27,7 @@ def low_high(Coin, input_data_length, trade_limit=None):
     #   거래 제한은 고점과 저점을 분리한다.
 
     #   User-Agent Configuration
-    ohlcv_excel = pybithumb.get_ohlcv(Coin, 'KRW', 'minute1')
+    ohlcv_excel = pybithumb.get_ohlcv(Coin, 'KRW', 'minute1', 'proxy')
 
     price_gap = ohlcv_excel.close.max() / ohlcv_excel.close.min()
     if (price_gap < 1.07) and (trade_limit is not None):
@@ -115,12 +115,13 @@ def made_x(file, input_data_length, model_num, check_span, Range_fluc, get_fig):
 
     # ----------- dataX, dataY 추출하기 -----------#
     # print(ohlcv_excel.tail(20))
+    # ohlcv_excel.to_excel('test.xlsx')
     # quit()
 
     # NaN 제외하고 데이터 자르기 (데이터가 PIXEL 로 들어간다고 생각하면 된다)
     # MA60 부터 FLUC_CLOSE, 존재하는 값만 슬라이싱
-    ohlcv_data = ohlcv_excel.values[ohlcv_excel['MA60'].isnull().sum(): -ohlcv_excel['fluc_close'].isnull().sum()].astype(np.float)
-    # print(pd.DataFrame(ohlcv_data).info())
+    ohlcv_data = ohlcv_excel.values[ohlcv_excel['MA60'].isnull().sum(): -check_span].astype(np.float)
+    # print(len(ohlcv_data))
     # print(list(map(float, ohlcv_data[0])))
     # quit()
 
@@ -171,9 +172,9 @@ def made_x(file, input_data_length, model_num, check_span, Range_fluc, get_fig):
         # ----------- FLUC_CLOSE TO SPAN, 넘겨주기 위해서 INDEX 를 담아주어야 한다. -----------#
         if get_fig == 1:
             spanlist = []
-            for m in range(len(ohlcv_data[:, [-1]])):
-                if ohlcv_data[:, [-1]][m] > Range_fluc:
-                    if m + 1 < len(ohlcv_data[:, [-1]]):
+            for m in range(len(fluc_close)):
+                if fluc_close[m] > 0.5:
+                    if m + 1 < len(fluc_close):
                         spanlist.append((m, m + 1))
                     else:
                         spanlist.append((m - 1, m))
@@ -182,7 +183,7 @@ def made_x(file, input_data_length, model_num, check_span, Range_fluc, get_fig):
 
             # ----------- Chart 그리기 -----------#
             plt.plot(min_max_scaler(ohlcv_data[:, [1]]), 'r', label='close')
-            plt.plot(scaled_MA60, 'b', label='MA60')
+            plt.plot(scaled_OBV, 'b', label='OBV')
             plt.legend(loc='upper right')
 
             # Spanning
@@ -203,7 +204,7 @@ if __name__ == '__main__':
 
     #           Params          #
     input_data_length = 54
-    model_num = 18
+    model_num = input('Press model num : ')
     check_span = 30
     Range_fluc = 1.07  # >> Best Param 을 찾도록 한다.
     get_fig = 0

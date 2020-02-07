@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from keras.models import load_model
 import os
-from Make_X2 import low_high
+from Make_X4 import low_high
 import warnings
 warnings.filterwarnings("ignore")
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -22,9 +22,8 @@ with open("Keys.txt") as f:
 
 #       Params      #
 input_data_length = 54
-limit_line_low = 0.9
-limit_line_high = 0.9
-model_num = 16
+limit_line = 0.9
+model_num = 21
 
 #       Trade Info      #
 #                                           Check The Money                                              #
@@ -33,8 +32,9 @@ buy_wait = 10
 Profits = 1.0
 
 #       Model Fitting       #
-model_low = load_model('./model/rapid_ascending_low %s_%s.hdf5' % (input_data_length, model_num))
-model_high = load_model('./model/rapid_ascending_high %s_%s.hdf5' % (input_data_length, model_num))
+model = load_model('./model/rapid_ascending %s_%s.hdf5' % (input_data_length, model_num))
+# model_low = load_model('./model/rapid_ascending_low %s_%s.hdf5' % (input_data_length, model_num))
+# model_high = load_model('./model/rapid_ascending_high %s_%s.hdf5' % (input_data_length, model_num))
 
 while True:
 
@@ -80,23 +80,22 @@ while True:
                 #   closeprice 가 MinMaxScaler() 로 0.3 보다 크면 predict 하지 않는다.
                 #   ohlcv_data_length 가 100 이하이면 predict 하지 않는다.
                 if (datetime.now().minute % 5) in [0, 1, 2]:
-                    X_test, buy_price = low_high(Coin, input_data_length)  # TopCoin 으로 제약조건을 걸어서 trade_limit==0
+                    X_test, buy_price = low_high(Coin, input_data_length, 'proxyison')  # TopCoin 으로 제약조건을 걸어서 trade_limit==0
                 else:
                     X_test, buy_price = low_high(Coin, input_data_length, 'proxyison')
 
                 if X_test is not None:
-                    Y_pred_low_ = model_low.predict(X_test, verbose=1)
-                    max_value_low = np.max(Y_pred_low_[:, [-1]])
-                    Y_pred_low = np.where(Y_pred_low_[:, [-1]] > max_value_low * limit_line_low, 1, 0)
+                    Y_pred_ = model.predict(X_test, verbose=1)
+                    max_value = np.max(Y_pred_, axis=0)
 
-                    if Y_pred_low[-1] > 0.5:
+                    if Y_pred_[-1][1] > max_value[1] * limit_line:
                         break
 
             except Exception as e:
                 print('Error in %s low predict :' % Coin, e)
                 continue
 
-        if Y_pred_low[-1] > 0.5:
+        if Y_pred_[-1][1] > max_value[1] * limit_line:
             break
 
     #                매수 등록                  #
@@ -228,12 +227,11 @@ while True:
                             print('Error in getting low_high data :', e)
                             time.sleep(random.random() * 5)
 
-                    Y_pred_high_ = model_high.predict(X_test, verbose=3)
-                    max_value_high = np.max(Y_pred_high_[:, [-1]])
-                    Y_pred_high = np.where(Y_pred_high_[:, [-1]] > max_value_high * limit_line_high, 1, 0)
+                    Y_pred_ = model.predict(X_test, verbose=3)
+                    max_value = np.max(Y_pred_, axis=0)
 
                     #   매도 진행
-                    if Y_pred_high[-1] > 0.5:
+                    if Y_pred_[-1][2] > max_value[2] * limit_line:
                         balance = bithumb.get_balance(Coin)
                         sellunit = int((balance[0]) * 10000) / 10000.0
                         SellOrder = bithumb.sell_market_order(Coin, sellunit, 'KRW')

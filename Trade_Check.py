@@ -45,7 +45,12 @@ if __name__ == '__main__':
         # input_data_length = int(input("Input Data Length : "))
         input_data_length = 54
         # model_num = input('Press model number : ')
-        model_num = 18
+        model_num = 19
+
+        try:
+            os.mkdir('./Figure_trade/%s_%s/' % (input_data_length, model_num))
+        except Exception as e:
+            pass
 
         #           PARAMS           #
         check_span = 30
@@ -82,7 +87,6 @@ if __name__ == '__main__':
 
                 for m in range(len(Y_pred)):
                     if Y_pred[m] > 0.5:
-                        print()
                         if m + 1 < len(Y_pred):
                             spanlist.append((m, m + 1))
                         else:

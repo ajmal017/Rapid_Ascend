@@ -93,11 +93,11 @@ if __name__ == '__main__':
             Y_pred = np.where(Y_pred_[:, [-1]] > max_value * limit_line, 1, 0)
 
             #       Save Pred_ohlcv      #
-            # 기존에 pybithumb 을 통해서 제공되던 ohlcv 와는 조금 다르다 >> 이전 데이터와 현재 y 데이터 행이 같다.
+            #   기존에 pybithumb 을 통해서 제공되던 ohlcv 와는 조금 다르다 >> 이전 데이터와 현재 y 데이터 행이 같다.
             sliced_Y = Y_pred.reshape(-1, 1)
             pred_ohlcv = np.concatenate((sliced_ohlcv, sliced_Y), axis=1)  # axis=1 가로로 합친다
 
-            # col 이 7이 아닌 데이터 걸러주기
+            #   col 이 7이 아닌 데이터 걸러주기
             try:
                 pred_ohlcv_df = pd.DataFrame(pred_ohlcv, columns=['open', 'close', 'high', 'low', 'volume', 'MA60', 'fluc_close'])
 

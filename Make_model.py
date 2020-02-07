@@ -19,7 +19,6 @@ rcParams['figure.figsize'] = 15, 10
 
 classes=np.array(("Rapid Ascending", "None"))
 # reshape 할때 필요한 params
-depth = 1
 row = Made_X.shape[1]
 col = Made_X.shape[2]
 
