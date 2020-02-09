@@ -216,48 +216,6 @@ def get_obv_min(Coin):
     return df['Whaleincome'].iloc[-1], slope
 
 
-# def get_ohlcv_min_proxy(Coin):
-#
-#     df = pybithumb.get_ohlcv_proxy(Coin, "KRW", "minute1")
-#
-#     obv = [0] * len(df.index)
-#     for m in range(1, len(df.index)):
-#         if df['close'].iloc[m] > df['close'].iloc[m - 1]:
-#             obv[m] = obv[m - 1] + df['volume'].iloc[m]
-#         elif df['close'].iloc[m] == df['close'].iloc[m - 1]:
-#             obv[m] = obv[m - 1]
-#         else:
-#             obv[m] = obv[m - 1] - df['volume'].iloc[m]
-#     df['OBV'] = obv
-#
-#     # 24시간의 obv를 잘라서 box 높이를 만들어주어야한다.
-#     DatetimeIndex = df.axes[0]
-#     boxheight = [0] * len(df.index)
-#     whaleincome = [0] * len(df.index)
-#     for m in range(len(df.index)):
-#         # 24시간 시작행 찾기, obv 데이터가 없으면 stop
-#         n = m
-#         while True:
-#             n -= 1
-#             if n < 0:
-#                 n = 0
-#                 break
-#             if 60 * (inthour(DatetimeIndex[m]) - inthour(DatetimeIndex[n])) + intmin(DatetimeIndex[m]) - intmin(
-#                     DatetimeIndex[n]) >= 60 * 24:
-#                 break
-#         obv_trim = obv[n:m]
-#         if len(obv_trim) != 0:
-#             boxheight[m] = max(obv_trim) - min(obv_trim)
-#             if obv[m] - min(obv_trim) != 0:
-#                 whaleincome[m] = (max(obv_trim) - obv[m]) / (obv[m] - min(obv_trim))
-#
-#     df['BoxHeight'] = boxheight
-#     df['Whaleincome'] = whaleincome
-#     df['OBVGap'] = np.where(df['Whaleincome'] > 3, (df['OBV'] - df['OBV'].shift(1)) / df['BoxHeight'], np.nan)
-#
-#     return df['OBVGap']
-
-
 def GetHogaunit(Hoga):
 
     if Hoga < 1:
@@ -320,28 +278,59 @@ def intmin(date):
     return min
 
 
-def realtime_cmo(Coin, closeprice, period=9):
+def cmo(df, period=9):
 
-    try:
-        df = pybithumb.get_ohlcv(Coin, "KRW", 'minute1')
-        del df['open']
-        del df['high']
-        del df['low']
-        del df['volume']
-        df.loc[len(df)] = [closeprice]
+    df['closegap_cunsum'] = (df['close'] - df['close'].shift(1)).cumsum()
+    df['closegap_abs_cumsum'] = abs(df['close'] - df['close'].shift(1)).cumsum()
+    # print(df)
 
-        df['closegap_cunsum'] = (df['close'] - df['close'].shift(1)).cumsum()
-        df['closegap_abs_cumsum'] = abs(df['close'] - df['close'].shift(1)).cumsum()
-        # print(df)
+    df['CMO'] = (df['closegap_cunsum'] - df['closegap_cunsum'].shift(period)) / (
+            df['closegap_abs_cumsum'] - df['closegap_abs_cumsum'].shift(period)) * 100
 
-        df['CMO'] = (df['closegap_cunsum'] - df['closegap_cunsum'].shift(period)) / (
-                df['closegap_abs_cumsum'] - df['closegap_abs_cumsum'].shift(period)) * 100
+    del df['closegap_cunsum']
+    del df['closegap_abs_cumsum']
 
-        return df['CMO'].iloc[-1]
+    return df['CMO']
 
-    except Exception as e:
-        print("Error in realtime_cmo :", e)
-        return 0
+
+def rsi(ohlcv_df, period=14):
+
+    ohlcv_df['up'] = np.where(ohlcv_df.diff(1)['close'] > 0, ohlcv_df.diff(1)['close'], 0)
+    ohlcv_df['down'] = np.where(ohlcv_df.diff(1)['close'] < 0, ohlcv_df.diff(1)['close'] * (-1), 0)
+    ohlcv_df['au'] = ohlcv_df['up'].rolling(period).mean()
+    ohlcv_df['ad'] = ohlcv_df['down'].rolling(period).mean()
+    ohlcv_df['RSI'] = ohlcv_df.au / (ohlcv_df.ad + ohlcv_df.au) * 100
+
+    del ohlcv_df['up']
+    del ohlcv_df['down']
+    del ohlcv_df['au']
+    del ohlcv_df['ad']
+
+    return ohlcv_df.RSI
+
+
+def obv(ohlcv_excel):
+
+    obv = [0] * len(ohlcv_excel)
+    for m in range(1, len(ohlcv_excel)):
+        if ohlcv_excel['close'].iloc[m] > ohlcv_excel['close'].iloc[m - 1]:
+            obv[m] = obv[m - 1] + ohlcv_excel['volume'].iloc[m]
+        elif ohlcv_excel['close'].iloc[m] == ohlcv_excel['close'].iloc[m - 1]:
+            obv[m] = obv[m - 1]
+        else:
+            obv[m] = obv[m - 1] - ohlcv_excel['volume'].iloc[m]
+
+    return obv
+
+
+def macd(ohlcv_excel, short=12, long=26, signal=9):
+
+    ohlcv_excel['MACD'] = ohlcv_excel['close'].ewm(span=short, min_periods=short-1, adjust=False).mean() - \
+        ohlcv_excel['close'].ewm(span=long, min_periods=long-1, adjust=False).mean()
+    ohlcv_excel['MACD_Signal'] = ohlcv_excel['MACD'].ewm(span=signal, min_periods=signal-1, adjust=False).mean()
+    ohlcv_excel['MACD_OSC'] = ohlcv_excel.MACD - ohlcv_excel.MACD_Signal
+
+    return
 
 
 def profitage(Coin, input_data_length, model_num, wait_tick=3, over_tick=10, Date='2019-09-25', excel=0):
@@ -352,14 +341,6 @@ def profitage(Coin, input_data_length, model_num, wait_tick=3, over_tick=10, Dat
     except Exception as e:
         print('Error in loading ohlcv_data :', e)
         return 1.0, 1.0, 1.0
-
-    # period = 9
-    # df['closegap_cunsum'] = (df['close'] - df['close'].shift(1)).cumsum()
-    # df['closegap_abs_cumsum'] = abs(df['close'] - df['close'].shift(1)).cumsum()
-    # # print(df)
-    #
-    # df['CMO'] = (df['closegap_cunsum'] - df['closegap_cunsum'].shift(period)) / (
-    #         df['closegap_abs_cumsum'] - df['closegap_abs_cumsum'].shift(period)) * 100
 
     # 매수 시점 = 급등 예상시, 매수가 = 이전 종가
     df['BuyPrice'] = np.where((df['trade_state'] > 0.5) & (df['trade_state'] < 1.5), df['close'].shift(1), np.nan)

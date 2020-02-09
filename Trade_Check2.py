@@ -25,29 +25,29 @@ def classifier(Y_pred_):
 if __name__ == '__main__':
 
     #           Making TopCoin List         #
-    Coinlist = pybithumb.get_tickers()
-    Fluclist = []
-    while True:
-        try:
-            for Coin in Coinlist:
-                tickerinfo = pybithumb.PublicApi.ticker(Coin)
-                data = tickerinfo['data']
-                fluctate = data['fluctate_rate_24H']
-                Fluclist.append(fluctate)
-                time.sleep(1 / 90)
-            break
-
-        except Exception as e:
-            Fluclist.append(None)
-            print('Error in making Topcoin :', e)
-
-    Fluclist = list(map(float, Fluclist))
-    series = pd.Series(Fluclist, Coinlist)
-    series = series.sort_values(ascending=False)
-
-    series = series[0:10]
-    TopCoin = list(series.index)
-    # TopCoin = [input('Input Coin Name : ').upper()]
+    # Coinlist = pybithumb.get_tickers()
+    # Fluclist = []
+    # while True:
+    #     try:
+    #         for Coin in Coinlist:
+    #             tickerinfo = pybithumb.PublicApi.ticker(Coin)
+    #             data = tickerinfo['data']
+    #             fluctate = data['fluctate_rate_24H']
+    #             Fluclist.append(fluctate)
+    #             time.sleep(1 / 90)
+    #         break
+    #
+    #     except Exception as e:
+    #         Fluclist.append(None)
+    #         print('Error in making Topcoin :', e)
+    #
+    # Fluclist = list(map(float, Fluclist))
+    # series = pd.Series(Fluclist, Coinlist)
+    # series = series.sort_values(ascending=False)
+    #
+    # series = series[0:10]
+    # TopCoin = list(series.index)
+    TopCoin = [input('Input Coin Name : ').upper()]
 
     for Coin in TopCoin:
         # Coin = input('Input Coin Name : ').upper()

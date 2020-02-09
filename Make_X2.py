@@ -59,31 +59,44 @@ def low_high(Coin, input_data_length, ip_limit=None, trade_limit=None):
 
         #          데이터 전처리         #
         #   Fixed X_data    #
-        price = ohlcv_data[:, :4]
-        volume = ohlcv_data[:, [4]]
-        OBV = ohlcv_data[:, [-1]]
-
-        scaled_price = min_max_scaler(price)
-        scaled_volume = min_max_scaler(volume)
-        scaled_OBV = min_max_scaler(OBV)
+        # price = ohlcv_data[:, :4]
+        # volume = ohlcv_data[:, [4]]
+        # OBV = ohlcv_data[:, [-1]]
+        #
+        # scaled_price = min_max_scaler(price)
+        # scaled_volume = min_max_scaler(volume)
+        # scaled_OBV = min_max_scaler(OBV)
         # print(scaled_MA60.shape)
 
-        x = np.concatenate((scaled_price, scaled_volume, scaled_OBV), axis=1)  # axis=1, 세로로 합친다
+        # x = np.concatenate((scaled_price, scaled_volume, scaled_OBV), axis=1)  # axis=1, 세로로 합친다
+        # print(x.shape)
+        # print(ohlcv_data.shape)
+        # quit()
 
-        if (x[-1][1] > 0.3) and (trade_limit is not None):
-            return None, None
+        # if (x[-1][1] > 0.3) and (trade_limit is not None):
+        #     return None, None
 
         # print(x.shape)  # (258, 6)
         # quit()
 
+        crop_size = 60
         dataX = []  # input_data length 만큼 담을 dataX 그릇
-        for i in range(input_data_length, len(ohlcv_data) + 1):  # 마지막 데이터까지 다 긇어모은다.
-            group_x = x[i - input_data_length:i]
+        for i in range(crop_size, len(ohlcv_data) + 1):  # 마지막 데이터까지 다 긇어모은다.
+            group_x = ohlcv_data[i - crop_size: i]
+            scaled_price = min_max_scaler(group_x[:, :4])
+            scaled_volume = min_max_scaler(group_x[:, [4]])
+            scaled_OBV = min_max_scaler(group_x[:, [-1]])
+            x = np.concatenate((scaled_price, scaled_volume, scaled_OBV), axis=1)  # axis=1, 세로로 합친다
+            group_x = x[-input_data_length:]
+            # print(group_x[-1:, 1:2])
+            # print(group_x.shape)
+            # print(group_x.max())
             dataX.append(group_x)  # dataX 리스트에 추가
 
         if (len(dataX) < 100) and (trade_limit is not None):
             return None, None
 
+        # quit()
         X_test = np.array(dataX)
         row = X_test.shape[1]
         col = X_test.shape[2]
@@ -150,19 +163,20 @@ def made_x(file, input_data_length, model_num, check_span, get_fig):
 
         #          데이터 전처리         #
         #   Fixed X_data    #
-        price = ohlcv_data[:, :4]
-        volume = ohlcv_data[:, [4]]
-        OBV = ohlcv_data[:, [-3]]
+        # price = ohlcv_data[:, :4]
+        # volume = ohlcv_data[:, [4]]
+        # OBV = ohlcv_data[:, [-3]]
 
         #   Flexible Y_data    #
         low_check = ohlcv_data[:, [-2]]
         high_check = ohlcv_data[:, [-1]]
 
-        scaled_price = min_max_scaler(price)
-        scaled_volume = min_max_scaler(volume)
-        scaled_OBV = min_max_scaler(OBV)
+        # scaled_price = min_max_scaler(price)
+        # scaled_volume = min_max_scaler(volume)
+        # scaled_OBV = min_max_scaler(OBV)
 
-        x = np.concatenate((scaled_price, scaled_volume, scaled_OBV), axis=1)  # axis=1, 세로로 합친다
+        # x = np.concatenate((price, scaled_volume, scaled_OBV), axis=1)  # axis=1, 세로로 합친다
+        x = ohlcv_data[:, :-2]
         y_low = low_check
         y_high = high_check
         # print(x.shape, y_low.shape)  # (258, 6) (258, 1)
@@ -172,9 +186,15 @@ def made_x(file, input_data_length, model_num, check_span, get_fig):
         dataY_low = []  # Target 을 담을 그릇
         dataY_high = []  # Target 을 담을 그릇
 
-        for i in range(input_data_length, len(ohlcv_data)):
-            # group_x >> 이전 완성된 데이터를 사용해보도록 한다. (진입하는 시점은 데이터가 완성되어있지 않으니까)
-            group_x = x[i - input_data_length: i]  # group_y 보다 1개 이전 데이터
+        crop_size = 54
+        for i in range(crop_size, len(ohlcv_data)):
+
+            group_x = x[i - crop_size: i]
+            group_x[:, :4] = min_max_scaler(group_x[:, :4])
+            group_x[:, [4]] = min_max_scaler(group_x[:, [4]])
+            group_x[:, [-1]] = min_max_scaler(group_x[:, [-1]])
+            group_x = group_x[-input_data_length:]
+
             group_y_low = y_low[i]
             group_y_high = y_high[i]
             # print(group_x.shape)  # (28, 6)
@@ -246,7 +266,7 @@ if __name__ == '__main__':
 
     # ----------- Params -----------#
     input_data_length = 54
-    model_num = input('Press model number : ')
+    model_num = 21
 
     #       Make folder      #
     try:
@@ -269,9 +289,9 @@ if __name__ == '__main__':
 
         # file = '2019-10-27 LAMB ohlcv.xlsx'
 
-        result = made_x(file, input_data_length, model_num, check_span, get_fig)
-        # result = low_high('FX', input_data_length)
-        # quit()
+        # result = made_x(file, input_data_length, model_num, check_span, get_fig)
+        result = low_high('FX', input_data_length)
+        quit()
 
         # ------------ 데이터가 있으면 dataX, dataY 병합하기 ------------#
         if result is not None:

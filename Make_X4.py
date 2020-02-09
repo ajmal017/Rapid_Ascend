@@ -189,26 +189,18 @@ def made_x(file, input_data_length, model_num, check_span, get_fig):
 
         #                      Get Figure                     #
         if get_fig == 1:
-            spanlist = []
             spanlist_low = []
             spanlist_high = []
 
             for m in range(len(trade_state)):
                 if (trade_state[m] > 0.5) and (trade_state[m] < 1.5):
                     if m + 1 < len(trade_state):
-                        spanlist.append((m, m + 1))
-                    else:
-                        spanlist.append((m - 1, m))
-
-            for m in range(len(trade_state)):
-                if (trade_state[m] > 1.5) and (trade_state[m] < 2.5):
-                    if m + 1 < len(trade_state):
                         spanlist_low.append((m, m + 1))
                     else:
                         spanlist_low.append((m - 1, m))
 
             for m in range(len(trade_state)):
-                if (trade_state[m] > 2.5) and (trade_state[m] < 3.5):
+                if (trade_state[m] > 1.5) and (trade_state[m] < 2.5):
                     if m + 1 < len(trade_state):
                         spanlist_high.append((m, m + 1))
                     else:
@@ -218,21 +210,14 @@ def made_x(file, input_data_length, model_num, check_span, get_fig):
 
             # ----------- 공통된 Chart 그리기 -----------#
 
-            plt.subplot(311)
-            plt.plot(min_max_scaler(ohlcv_data[:, 1:2]), 'r', label='close')
-            plt.plot(scaled_OBV, 'b', label='OBV')
-            plt.legend(loc='upper right')
-            for i in range(len(spanlist)):
-                plt.axvspan(spanlist[i][0], spanlist[i][1], facecolor='g', alpha=0.5)
-
-            plt.subplot(312)
+            plt.subplot(211)
             plt.plot(min_max_scaler(ohlcv_data[:, 1:2]), 'r', label='close')
             plt.plot(scaled_OBV, 'b', label='OBV')
             plt.legend(loc='upper right')
             for i in range(len(spanlist_low)):
                 plt.axvspan(spanlist_low[i][0], spanlist_low[i][1], facecolor='m', alpha=0.5)
 
-            plt.subplot(313)
+            plt.subplot(212)
             plt.plot(min_max_scaler(ohlcv_data[:, 1:2]), 'r', label='close')
             plt.plot(scaled_OBV, 'b', label='OBV')
             plt.legend(loc='upper right')
@@ -262,7 +247,7 @@ if __name__ == '__main__':
     except Exception as e:
         pass
     check_span = 30
-    get_fig = 0
+    get_fig = 1
 
     Made_X = []
     Made_Y = []
@@ -291,6 +276,6 @@ if __name__ == '__main__':
     X = np.array(Made_X)
     Y = np.array(Made_Y)
 
-    np.save('./Made_X/Made_X %s_%s' % (input_data_length, model_num), X)
-    np.save('./Made_X/Made_Y %s_%s' % (input_data_length, model_num), Y)
+    # np.save('./Made_X/Made_X %s_%s' % (input_data_length, model_num), X)
+    # np.save('./Made_X/Made_Y %s_%s' % (input_data_length, model_num), Y)
 

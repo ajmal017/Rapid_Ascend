@@ -80,7 +80,7 @@ while True:
                 #   closeprice 가 MinMaxScaler() 로 0.3 보다 크면 predict 하지 않는다.
                 #   ohlcv_data_length 가 100 이하이면 predict 하지 않는다.
                 if (datetime.now().minute % 5) in [0, 1, 2]:
-                    X_test, buy_price = low_high(Coin, input_data_length, 'proxyison')  # TopCoin 으로 제약조건을 걸어서 trade_limit==0
+                    X_test, buy_price = low_high(Coin, input_data_length)  # TopCoin 으로 제약조건을 걸어서 trade_limit==0
                 else:
                     X_test, buy_price = low_high(Coin, input_data_length, 'proxyison')
 

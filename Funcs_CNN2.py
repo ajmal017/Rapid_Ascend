@@ -320,7 +320,7 @@ def intmin(date):
     return min
 
 
-def realtime_cmo(Coin, closeprice, period=9):
+def cmo(Coin, closeprice, period=9):
 
     try:
         df = pybithumb.get_ohlcv(Coin, "KRW", 'minute1')
@@ -337,7 +337,7 @@ def realtime_cmo(Coin, closeprice, period=9):
         df['CMO'] = (df['closegap_cunsum'] - df['closegap_cunsum'].shift(period)) / (
                 df['closegap_abs_cumsum'] - df['closegap_abs_cumsum'].shift(period)) * 100
 
-        return df['CMO'].iloc[-1]
+        return df['CMO']
 
     except Exception as e:
         print("Error in realtime_cmo :", e)

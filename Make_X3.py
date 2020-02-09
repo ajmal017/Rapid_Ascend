@@ -67,7 +67,7 @@ def low_high(Coin, input_data_length, ip_limit=None, trade_limit=None):
         scaled_OBV = min_max_scaler(OBV)
         # print(scaled_MA60.shape)
 
-        x = np.concatenate((scaled_price, scaled_volume, scaled_OBV), axis=1)  # axis=1, 세로로 합친다
+        x = np.concatenate((scaled_price, scaled_volume, scaled_OBV), axis=1) #* 0.7 # axis=1, 세로로 합친다
 
         if (x[-1][1] > 0.3) and (trade_limit is not None):
             return None, None

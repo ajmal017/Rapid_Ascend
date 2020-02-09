@@ -10,20 +10,27 @@ pd.set_option('display.max_rows', 1500)
 # print(time.time() - start_time)
 # for i in range(10):
 #     start_time = time.time()
-#     print(pybithumb.get_ohlcv('BTC', 'KRW', 'minute1'))
+#     print(pybithumb.get_ohlcv('BTC', 'KRW', 'minute1', 'proxy'))
 #     print(time.time() - start_time)
 
+
+from Funcs_CNN4 import rsi, obv, macd
+
+print(macd(pybithumb.get_ohlcv('MTL', 'KRW', 'minute1')))
+# print(obv(pybithumb.get_ohlcv('BTC', 'KRW', 'minute1')))
 # from datetime import datetime
 # print(datetime.now().date())
 
-
+# BVC_data = pd.read_excel('BVC/2020-01-26 4.515 0.998 by 21 3 10.xlsx')
+# print(BVC_data.TotalProfits.cumprod().astype('float64'))
+# print(int(BVC_data.TotalProfits.cumprod().iloc[-1]))
 
 #
-Coins = pybithumb.get_tickers()
-# #
-for Coin in Coins:
-    ohlcv_data = pybithumb.get_ohlcv(Coin, 'KRW', 'minute1')
-    print(Coin, ohlcv_data.close.max() / ohlcv_data.close.min(), len(ohlcv_data))
+# Coins = pybithumb.get_tickers()
+# # #
+# for Coin in Coins:
+#     ohlcv_data = pybithumb.get_ohlcv(Coin, 'KRW', 'minute1')
+#     print(Coin, ohlcv_data.close.max() / ohlcv_data.close.min(), len(ohlcv_data))
 
 # list = [1, 1, 1]
 # print(set(list))
