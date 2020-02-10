@@ -79,7 +79,7 @@ def low_high(Coin, input_data_length, ip_limit=None, trade_limit=None):
         # print(x.shape)  # (258, 6)
         # quit()
 
-        crop_size = 60
+        crop_size = 200
         dataX = []  # input_data length 만큼 담을 dataX 그릇
         for i in range(crop_size, len(ohlcv_data) + 1):  # 마지막 데이터까지 다 긇어모은다.
             group_x = ohlcv_data[i - crop_size: i]

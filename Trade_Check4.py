@@ -37,9 +37,9 @@ if __name__ == '__main__':
     series = pd.Series(Fluclist, Coinlist)
     series = series.sort_values(ascending=False)
 
-    series = series[0:10]
+    series = series[0:15]
     TopCoin = list(series.index)
-    # TopCoin = ['hyc'.upper()]
+    # TopCoin = ['bcd'.upper()]
 
     for Coin in TopCoin:
         # Coin = input('Input Coin Name : ').upper()
@@ -64,7 +64,7 @@ if __name__ == '__main__':
         model = load_model('./model/rapid_ascending %s_%s.hdf5' % (input_data_length, model_num))
 
         try:
-            X_test, _ = low_high(Coin, input_data_length)
+            X_test, _ = low_high(Coin, input_data_length, 'proxy', offset=0)
 
         except Exception as e:
             print('Error in getting data from made_x :', e)

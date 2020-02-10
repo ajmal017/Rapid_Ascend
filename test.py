@@ -13,10 +13,11 @@ pd.set_option('display.max_rows', 1500)
 #     print(pybithumb.get_ohlcv('BTC', 'KRW', 'minute1', 'proxy'))
 #     print(time.time() - start_time)
 
-
-from Funcs_CNN4 import rsi, obv, macd
-
-print(macd(pybithumb.get_ohlcv('MTL', 'KRW', 'minute1')))
+df = pybithumb.get_ohlcv('waves'.upper(), 'KRW', 'minute1', 'proxy')
+df.to_excel('test.xlsx')
+# from Funcs_CNN4 import rsi, obv, macd
+#
+# print(macd(pybithumb.get_ohlcv('MTL', 'KRW', 'minute1')))
 # print(obv(pybithumb.get_ohlcv('BTC', 'KRW', 'minute1')))
 # from datetime import datetime
 # print(datetime.now().date())

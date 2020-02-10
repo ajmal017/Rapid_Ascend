@@ -33,8 +33,6 @@ Profits = 1.0
 
 #       Model Fitting       #
 model = load_model('./model/rapid_ascending %s_%s.hdf5' % (input_data_length, model_num))
-# model_low = load_model('./model/rapid_ascending_low %s_%s.hdf5' % (input_data_length, model_num))
-# model_high = load_model('./model/rapid_ascending_high %s_%s.hdf5' % (input_data_length, model_num))
 
 while True:
 
@@ -82,7 +80,7 @@ while True:
                 if (datetime.now().minute % 5) in [0, 1, 2]:
                     X_test, buy_price = low_high(Coin, input_data_length)  # TopCoin 으로 제약조건을 걸어서 trade_limit==0
                 else:
-                    X_test, buy_price = low_high(Coin, input_data_length, 'proxyison')
+                    X_test, buy_price = low_high(Coin, input_data_length, 'proxy')
 
                 if X_test is not None:
                     Y_pred_ = model.predict(X_test, verbose=1)
@@ -220,7 +218,11 @@ while True:
                 if datetime.now().second == 55:
                     while True:
                         try:
-                            X_test, _ = low_high(Coin, input_data_length)
+                            #       Sudden_Death Rule 적용      #
+                            if time.time() - start > 60 * 60 * 5:
+                                X_test, _ = low_high(Coin, input_data_length, sudden_death=1.0)
+                            else:
+                                X_test, _ = low_high(Coin, input_data_length)
                             break
 
                         except Exception as e:
@@ -240,6 +242,15 @@ while True:
                         # print("##### %s %s KRW 지정 매도 재등록 #####" % (Coin, limit_sell_pricePlus))
                         print(SellOrder)
                         break
+
+                    #   Check Manual Trade
+                    # else:
+                    #     ordersucceed = bithumb.get_balance(Coin)
+                    #     if ordersucceed[0] != balance[0]:
+                    #         print("    매도 체결    ", end=' ')
+                    #         Profits *= (bithumb.get_balance(Coin)[2] - (krw - money)) / money
+                    #         print("Accumulated Profits : %.6f\n" % Profits)
+                    #         break
 
             except Exception as e:
                 print('Error in %s high predict :' % Coin, e)
