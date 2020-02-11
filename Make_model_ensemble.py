@@ -76,18 +76,21 @@ batch_size = 128
 
 #       dataset 분리      #       다차원 배열을 함수의 인자로 받는 방법을 모릅니다..    #
 #       list 순서 : price, vol, sto, macd     #
-split_train_data = [X_train[:, :, :4], X_train[:, :, [4, -5]], X_train[:, :, [-6, -4]], X_train[:, :, -3:]]
-print(split_train_data[0].shape)
-print(split_train_data[1].shape)
-print(split_train_data[2].shape)
-print(split_train_data[3].shape)
-quit()
-split_val_data = [X_val[:, :4], X_val[:, [4, -6]], X_val[:, [-7, -5]], X_val[:, -4:-1]]
-split_test_data = [X_test[:, :4], X_test[:, [4, -6]], X_test[:, [-7, -5]], X_test[:, -4:-1]]
+def data_split_flow(dataX, dataY):
+    split_data = [dataX[:, :, :4], dataX[:, :, [4, -5]], dataX[:, :, [-6, -4]], dataX[:, :, -3:]]
 
-train_flow_list = [datagen.flow(x, Y_train, batch_size=batch_size) for x in split_train_data]
-val_flow_list = [datagen.flow(x, Y_val, batch_size=batch_size) for x in split_val_data]
-test_flow_list = [datagen.flow(x, Y_test, batch_size=batch_size) for x in split_test_data]
+    flow_list = [] * len(split_data)
+    for i in range(len(split_data)):
+        datagen.fit(split_data[i])
+        flow_data = datagen.flow(split_data[i], dataY, batch_size=batch_size)
+        flow_list.append(flow_data)
+
+    return flow_list
+
+
+train_flow_list = data_split_flow(X_train, Y_train)
+val_flow_list = data_split_flow(X_val, Y_val)
+test_flow_list = data_split_flow(X_test, Y_test)
 
 
 from keras.utils import plot_model

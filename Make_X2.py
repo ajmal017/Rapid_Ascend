@@ -23,7 +23,7 @@ def min_max_scaler(price):
     return Scaler.transform(price)
 
 
-def low_high(Coin, input_data_length, ip_limit=None, trade_limit=None):
+def low_high(Coin, input_data_length, ip_limit=None, trade_limit=None, sudden_death=0):
 
     #   거래 제한은 고점과 저점을 분리한다.
 
@@ -86,7 +86,7 @@ def low_high(Coin, input_data_length, ip_limit=None, trade_limit=None):
             scaled_price = min_max_scaler(group_x[:, :4])
             scaled_volume = min_max_scaler(group_x[:, [4]])
             scaled_OBV = min_max_scaler(group_x[:, [-1]])
-            x = np.concatenate((scaled_price, scaled_volume, scaled_OBV), axis=1)  # axis=1, 세로로 합친다
+            x = np.concatenate((scaled_price, scaled_volume, scaled_OBV), axis=1) + sudden_death # axis=1, 세로로 합친다
             group_x = x[-input_data_length:]
             # print(group_x[-1:, 1:2])
             # print(group_x.shape)
@@ -103,7 +103,7 @@ def low_high(Coin, input_data_length, ip_limit=None, trade_limit=None):
 
         X_test = X_test.astype('float32').reshape(-1, row, col, 1)
 
-        return X_test, closeprice
+        return X_test, closeprice, ohlcv_data[crop_size:]
 
 
 def made_x(file, input_data_length, model_num, check_span, get_fig):
