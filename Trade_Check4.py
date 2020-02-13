@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from keras.models import load_model
 from matplotlib import pyplot as plt
-from Make_X3 import low_high
+from Make_X2 import low_high
 from datetime import datetime
 import pybithumb
 import time
@@ -39,7 +39,7 @@ if __name__ == '__main__':
     #
     # series = series[0:15]
     # TopCoin = list(series.index)
-    TopCoin = ['HYC'.upper()]
+    TopCoin = ['chr'.upper()]
 
     for Coin in TopCoin:
         # Coin = input('Input Coin Name : ').upper()
@@ -64,12 +64,13 @@ if __name__ == '__main__':
         model = load_model('./model/rapid_ascending %s_%s.hdf5' % (input_data_length, model_num))
 
         try:
-            X_test, _, closeprice = low_high(Coin, input_data_length, 'proxy', sudden_death=0.)
+            X_test, _, closeprice = low_high(Coin, input_data_length, sudden_death=0.)
+            # X_test, _ = low_high(Coin, input_data_length, sudden_death=1.)
+            # closeprice = np.roll(np.array(list(map(lambda x: x[-1][[1]][0], X_test))), -1)
 
         except Exception as e:
             print('Error in getting data from made_x :', e)
 
-        # closeprice = np.roll(np.array(list(map(lambda x: x[-1][[1]][0], X_test))), -1)
         OBV = np.roll(np.array(list(map(lambda x: x[-1][[-1]][0], X_test))), -1)
 
         # dataX 에 담겨있는 value 에 [-1] : 바로 이전의 행 x[-1][:].shape = (1, 6)
@@ -124,7 +125,7 @@ if __name__ == '__main__':
                 plt.plot(OBV, 'b', label='OBV')
                 plt.legend(loc='upper right')
                 for i in range(len(spanlist_low)):
-                    plt.axvspan(spanlist_low[i][0], spanlist_low[i][1], facecolor='m', alpha=0.5)
+                    plt.axvspan(spanlist_low[i][0], spanlist_low[i][1], facecolor='c', alpha=0.5)
 
                 plt.subplot(212)
                 # plt.subplot(313)
@@ -132,7 +133,7 @@ if __name__ == '__main__':
                 plt.plot(OBV, 'b', label='OBV')
                 plt.legend(loc='upper right')
                 for i in range(len(spanlist_high)):
-                    plt.axvspan(spanlist_high[i][0], spanlist_high[i][1], facecolor='c', alpha=0.5)
+                    plt.axvspan(spanlist_high[i][0], spanlist_high[i][1], facecolor='m', alpha=0.5)
 
                 # plt.show()
                 plt.savefig('./Figure_trade/%s_%s/%s %s.png' % (input_data_length, model_num, datetime.now().date(), Coin), dpi=500)

@@ -76,7 +76,7 @@ def low_high(Coin, input_data_length, ip_limit=None, trade_limit=None, sudden_de
         # quit()
 
         dataX = []  # input_data length 만큼 담을 dataX 그릇
-        for i in range(input_data_length, len(ohlcv_data) + 1):  # 마지막 데이터까지 다 긇어모은다.
+        for i in range(input_data_length, len(x) + 1):  # 마지막 데이터까지 다 긇어모은다.
             group_x = x[i - input_data_length:i]
             dataX.append(group_x)  # dataX 리스트에 추가
 

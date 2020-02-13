@@ -12,9 +12,22 @@ pd.set_option('display.max_rows', 1500)
 #     start_time = time.time()
 #     print(pybithumb.get_ohlcv('BTC', 'KRW', 'minute1', 'proxy'))
 #     print(time.time() - start_time)
-
-df = pybithumb.get_ohlcv('waves'.upper(), 'KRW', 'minute1', 'proxy')
-df.to_excel('test.xlsx')
+# import numpy as np
+#
+# nlist = np.array([2, 3, 1, 1,1, 1,1,1,1,1,1,11,1,1]).reshape(-1, 1)
+# if (sum(nlist > 1) == 3):
+#     if nlist[-3] > 1:
+#         print('ok')
+#     print(sum(nlist > 1))
+#     print('ok')
+from Make_X4 import low_high
+X_test, buy_price = low_high('PCM', 54, 'proxy')
+# nlist =
+# nlist = list(filter(None, nlist))
+# Fluclist = list(map(float, list(filter(None, nlist))))
+# print(Fluclist)
+# df = pybithumb.get_ohlcv('waves'.upper(), 'KRW', 'minute1', 'proxy')
+# df.to_excel('test.xlsx')
 # from Funcs_CNN4 import rsi, obv, macd
 #
 # print(macd(pybithumb.get_ohlcv('MTL', 'KRW', 'minute1')))

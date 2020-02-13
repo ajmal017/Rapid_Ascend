@@ -79,14 +79,14 @@ def low_high(Coin, input_data_length, ip_limit=None, trade_limit=None, sudden_de
         # print(x.shape)  # (258, 6)
         # quit()
 
-        crop_size = 200
+        crop_size = 300
         dataX = []  # input_data length 만큼 담을 dataX 그릇
         for i in range(crop_size, len(ohlcv_data) + 1):  # 마지막 데이터까지 다 긇어모은다.
             group_x = ohlcv_data[i - crop_size: i]
             scaled_price = min_max_scaler(group_x[:, :4])
             scaled_volume = min_max_scaler(group_x[:, [4]])
             scaled_OBV = min_max_scaler(group_x[:, [-1]])
-            x = np.concatenate((scaled_price, scaled_volume, scaled_OBV), axis=1) + sudden_death # axis=1, 세로로 합친다
+            x = np.concatenate((scaled_price, scaled_volume, scaled_OBV), axis=1) + sudden_death  # axis=1, 세로로 합친다
             group_x = x[-input_data_length:]
             # print(group_x[-1:, 1:2])
             # print(group_x.shape)
@@ -103,7 +103,7 @@ def low_high(Coin, input_data_length, ip_limit=None, trade_limit=None, sudden_de
 
         X_test = X_test.astype('float32').reshape(-1, row, col, 1)
 
-        return X_test, closeprice, ohlcv_data[crop_size:]
+        return X_test, closeprice, min_max_scaler(ohlcv_data[crop_size:, [1]])
 
 
 def made_x(file, input_data_length, model_num, check_span, get_fig):

@@ -22,7 +22,7 @@ def min_max_scaler(price):
     return Scaler.transform(price)
 
 
-def low_high(Coin, input_data_length, ip_limit=None, trade_limit=None, sudden_death=0):
+def low_high(Coin, input_data_length, ip_limit=None, trade_limit=None, crop=None, sudden_death=0):
 
     #   거래 제한은 고점과 저점을 분리한다.
 
@@ -67,6 +67,16 @@ def low_high(Coin, input_data_length, ip_limit=None, trade_limit=None, sudden_de
         scaled_OBV = min_max_scaler(OBV)
         # print(scaled_MA60.shape)
 
+        #       OBV 가 급격히 떨어져서 진입 / 이탈 예측이 어려워진 경우      #
+        if crop is not None:
+            crop_size = 300
+            if len(scaled_OBV) > crop_size:
+                if sum(scaled_OBV[-crop_size:] < 0.2) >= crop_size - 50:  # sum 의 결과값은 list 이지만 == crop_size 와 비교가능하다.
+                    if scaled_OBV[-crop_size] < 0.2:  # 맨 앞 OBV 가 0.2 보다 작으면,
+                        scaled_price = min_max_scaler(price[-crop_size:])
+                        scaled_volume = min_max_scaler(volume[-crop_size:])
+                        scaled_OBV = min_max_scaler(OBV[-crop_size:])
+
         x = np.concatenate((scaled_price, scaled_volume, scaled_OBV), axis=1) + sudden_death  # axis=1, 세로로 합친다
 
         if (x[-1][1] > 0.3) and (trade_limit is not None):
@@ -76,7 +86,7 @@ def low_high(Coin, input_data_length, ip_limit=None, trade_limit=None, sudden_de
         # quit()
 
         dataX = []  # input_data length 만큼 담을 dataX 그릇
-        for i in range(input_data_length, len(ohlcv_data) + 1):  # 마지막 데이터까지 다 긇어모은다.
+        for i in range(input_data_length, len(x) + 1):  # 마지막 데이터까지 다 긇어모은다.
             group_x = x[i - input_data_length:i]
             dataX.append(group_x)  # dataX 리스트에 추가
 
@@ -84,6 +94,7 @@ def low_high(Coin, input_data_length, ip_limit=None, trade_limit=None, sudden_de
             return None, None
 
         X_test = np.array(dataX)
+
         row = X_test.shape[1]
         col = X_test.shape[2]
 

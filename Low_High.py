@@ -56,7 +56,7 @@ while True:
                 Fluclist.append(None)
                 print('Error in making Topcoin :', e)
 
-        Fluclist = list(map(float, Fluclist))
+        Fluclist = list(map(float, list(filter(None, Fluclist))))
         series = pd.Series(Fluclist, Coinlist)
         series = series.sort_values(ascending=False)
 
@@ -220,9 +220,9 @@ while True:
                         try:
                             #       Sudden_Death Rule 적용      #
                             if time.time() - start > 60 * 60 * 5:
-                                X_test, _ = low_high(Coin, input_data_length, sudden_death=1.0)
+                                X_test, _ = low_high(Coin, input_data_length, crop='on', sudden_death=1.0)
                             else:
-                                X_test, _ = low_high(Coin, input_data_length)
+                                X_test, _ = low_high(Coin, input_data_length, crop='on')
                             break
 
                         except Exception as e:
