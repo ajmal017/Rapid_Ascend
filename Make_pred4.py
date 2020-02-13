@@ -3,7 +3,7 @@ import pandas as pd
 from keras.models import load_model
 from matplotlib import pyplot as plt
 import os
-from Make_X4 import made_x
+from Make_X2 import made_x
 from keras.utils import np_utils
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -125,7 +125,7 @@ if __name__ == '__main__':
                 plt.plot(OBV, 'b', label='OBV')
                 plt.legend(loc='upper right')
                 for i in range(len(spanlist_low)):
-                    plt.axvspan(spanlist_low[i][0], spanlist_low[i][1], facecolor='m', alpha=0.5)
+                    plt.axvspan(spanlist_low[i][0], spanlist_low[i][1], facecolor='c', alpha=0.5)
 
                 plt.subplot(212)
                 # plt.subplot(313)
@@ -133,7 +133,7 @@ if __name__ == '__main__':
                 plt.plot(OBV, 'b', label='OBV')
                 plt.legend(loc='upper right')
                 for i in range(len(spanlist_high)):
-                    plt.axvspan(spanlist_high[i][0], spanlist_high[i][1], facecolor='c', alpha=0.5)
+                    plt.axvspan(spanlist_high[i][0], spanlist_high[i][1], facecolor='m', alpha=0.5)
 
                 Date = file.split()[0]
                 Coin = file.split()[1].split('.')[0]

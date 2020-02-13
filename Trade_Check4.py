@@ -37,16 +37,16 @@ if __name__ == '__main__':
     # series = pd.Series(Fluclist, Coinlist)
     # series = series.sort_values(ascending=False)
     #
-    # series = series[0:15]
+    # series = series[0:50]
     # TopCoin = list(series.index)
-    TopCoin = ['chr'.upper()]
+    TopCoin = ['eth'.upper()]
 
     for Coin in TopCoin:
         # Coin = input('Input Coin Name : ').upper()
         # input_data_length = int(input("Input Data Length : "))
         input_data_length = 54
         # model_num = input('Press model number : ')
-        model_num = 21
+        model_num = 23
 
         #           PARAMS           #
         check_span = 30
@@ -64,9 +64,13 @@ if __name__ == '__main__':
         model = load_model('./model/rapid_ascending %s_%s.hdf5' % (input_data_length, model_num))
 
         try:
-            X_test, _, closeprice = low_high(Coin, input_data_length, sudden_death=0.)
+            X_test, _, closeprice = low_high(Coin, input_data_length, crop_size=500, sudden_death=0.)
+            X_test2, _, closeprice2 = low_high(Coin, input_data_length, crop_size=100, sudden_death=0.)
             # X_test, _ = low_high(Coin, input_data_length, sudden_death=1.)
             # closeprice = np.roll(np.array(list(map(lambda x: x[-1][[1]][0], X_test))), -1)
+
+            if X_test is None:
+                continue
 
         except Exception as e:
             print('Error in getting data from made_x :', e)
@@ -82,23 +86,33 @@ if __name__ == '__main__':
 
             #       Data Preprocessing      #
             X_test = np.array(X_test)
+            X_test2 = np.array(X_test2)
 
             row = X_test.shape[1]
             col = X_test.shape[2]
 
             X_test = X_test.astype('float32').reshape(-1, row, col, 1)
+            X_test2 = X_test2.astype('float32').reshape(-1, row, col, 1)
             # print(X_test.shape)
 
             Y_pred_ = model.predict(X_test, verbose=1)
+            Y_pred2_ = model.predict(X_test2, verbose=1)
 
             max_value = np.max(Y_pred_, axis=0)
+            max_value2 = np.max(Y_pred2_, axis=0)
             limit_line = 0.9
             Y_pred = np.zeros(len(Y_pred_))
+            Y_pred2 = np.zeros(len(Y_pred2_))
             for i in range(len(Y_pred_)):
                 if Y_pred_[i][1] > max_value[1] * limit_line:
                     Y_pred[i] = 1
                 elif Y_pred_[i][2] > max_value[2] * limit_line:
                     Y_pred[i] = 2
+            for i in range(len(Y_pred2_)):
+                if Y_pred2_[i][1] > max_value2[1] * limit_line:
+                    Y_pred2[i] = 1
+                elif Y_pred2_[i][2] > max_value2[2] * limit_line:
+                    Y_pred2[i] = 2
 
             if get_fig == 1:
 
@@ -112,8 +126,8 @@ if __name__ == '__main__':
                         else:
                             spanlist_low.append((m - 1, m))
 
-                for m in range(len(Y_pred)):
-                    if (Y_pred[m] > 1.5) and (Y_pred[m] < 2.5):
+                for m in range(len(Y_pred2)):
+                    if (Y_pred2[m] > 1.5) and (Y_pred2[m] < 2.5):
                         if m + 1 < len(Y_pred):
                             spanlist_high.append((m, m + 1))
                         else:
@@ -129,7 +143,7 @@ if __name__ == '__main__':
 
                 plt.subplot(212)
                 # plt.subplot(313)
-                plt.plot(closeprice, 'r', label='close')
+                plt.plot(closeprice2, 'r', label='close')
                 plt.plot(OBV, 'b', label='OBV')
                 plt.legend(loc='upper right')
                 for i in range(len(spanlist_high)):

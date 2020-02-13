@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from keras.models import load_model
 import os
-from Make_X4 import low_high
+from Make_X2 import low_high
 import warnings
 warnings.filterwarnings("ignore")
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -23,12 +23,13 @@ with open("Keys.txt") as f:
 #       Params      #
 input_data_length = 54
 limit_line = 0.9
-model_num = 21
+model_num = 23
 
 #       Trade Info      #
 #                                           Check The Money                                              #
 CoinVolume = 15
-buy_wait = 10
+buy_wait = 10  # minute
+sell_wait = 100  # minute
 Profits = 1.0
 
 #       Model Fitting       #
@@ -78,9 +79,9 @@ while True:
                 #   closeprice 가 MinMaxScaler() 로 0.3 보다 크면 predict 하지 않는다.
                 #   ohlcv_data_length 가 100 이하이면 predict 하지 않는다.
                 if (datetime.now().minute % 5) in [0, 1, 2]:
-                    X_test, buy_price = low_high(Coin, input_data_length)  # TopCoin 으로 제약조건을 걸어서 trade_limit==0
+                    X_test, buy_price, _ = low_high(Coin, input_data_length, crop_size=500, sudden_death=0.)  # TopCoin 으로 제약조건을 걸어서 trade_limit==0
                 else:
-                    X_test, buy_price = low_high(Coin, input_data_length, 'proxy')
+                    X_test, buy_price, _ = low_high(Coin, input_data_length, 'proxy', crop_size=500, sudden_death=0.)
 
                 if X_test is not None:
                     Y_pred_ = model.predict(X_test, verbose=1)
@@ -219,10 +220,10 @@ while True:
                     while True:
                         try:
                             #       Sudden_Death Rule 적용      #
-                            if time.time() - start > 60 * 60 * 5:
-                                X_test, _ = low_high(Coin, input_data_length, crop='on', sudden_death=1.0)
+                            if time.time() - start > sell_wait * 60:
+                                X_test, _, _ = low_high(Coin, input_data_length, crop_size=100, sudden_death=0.)
                             else:
-                                X_test, _ = low_high(Coin, input_data_length, crop='on')
+                                X_test, _, _ = low_high(Coin, input_data_length, crop_size=100, sudden_death=0.)
                             break
 
                         except Exception as e:
