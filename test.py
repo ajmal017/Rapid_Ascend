@@ -19,9 +19,11 @@ pd.set_option('display.max_rows', 1500)
 #     if nlist[-3] > 1:
 #         print('ok')
 #     print(sum(nlist > 1))
-#     print('ok')
-from Make_X4 import low_high
-X_test, buy_price = low_high('PCM', 54, 'proxy')
+# #     print('ok')
+words_list = list(map(str.upper, ['dkj', 'df']))
+print(words_list)
+# from Make_X4 import low_high
+# X_test, buy_price = low_high('PCM', 54, 'proxy')
 # nlist =
 # nlist = list(filter(None, nlist))
 # Fluclist = list(map(float, list(filter(None, nlist))))

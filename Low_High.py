@@ -22,14 +22,13 @@ with open("Keys.txt") as f:
 
 #       Params      #
 input_data_length = 54
-limit_line = 0.9
 model_num = 23
 
 #       Trade Info      #
 #                                           Check The Money                                              #
 CoinVolume = 15
 buy_wait = 10  # minute
-sell_wait = 100  # minute
+sell_wait = 300  # minute
 Profits = 1.0
 
 #       Model Fitting       #
@@ -86,6 +85,7 @@ while True:
                 if X_test is not None:
                     Y_pred_ = model.predict(X_test, verbose=1)
                     max_value = np.max(Y_pred_, axis=0)
+                    limit_line = 0.9
 
                     if Y_pred_[-1][1] > max_value[1] * limit_line:
                         break
@@ -222,6 +222,7 @@ while True:
                             #       Sudden_Death Rule 적용      #
                             if time.time() - start > sell_wait * 60:
                                 X_test, _, _ = low_high(Coin, input_data_length, crop_size=100, sudden_death=0.)
+                                limit_line = 0.5
                             else:
                                 X_test, _, _ = low_high(Coin, input_data_length, crop_size=100, sudden_death=0.)
                             break

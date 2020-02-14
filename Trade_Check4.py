@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from keras.models import load_model
 from matplotlib import pyplot as plt
-from Make_X2 import low_high
+from Make_X2 import low_high, low_high2, low_high3
 from datetime import datetime
 import pybithumb
 import time
@@ -39,7 +39,7 @@ if __name__ == '__main__':
     #
     # series = series[0:50]
     # TopCoin = list(series.index)
-    TopCoin = ['eth'.upper()]
+    TopCoin = list(map(str.upper, ['theta']))
 
     for Coin in TopCoin:
         # Coin = input('Input Coin Name : ').upper()
@@ -47,9 +47,9 @@ if __name__ == '__main__':
         input_data_length = 54
         # model_num = input('Press model number : ')
         model_num = 23
+        # model_num2 = 21
 
         #           PARAMS           #
-        check_span = 30
         get_fig = 1
 
         #       Make folder      #
@@ -61,7 +61,9 @@ if __name__ == '__main__':
             pass
 
         #       LOAD MODEL      #
-        model = load_model('./model/rapid_ascending %s_%s.hdf5' % (input_data_length, model_num))
+        model = load_model('./model/rapid_ascending %s_%s - 4.39.hdf5' % (input_data_length, model_num))
+        # model2 = load_model('./model/rapid_ascending %s_%s.hdf5' % (input_data_length, model_num2))
+        # model2 = load_model('./model/rapid_ascending %s_%s.hdf5' % (30, 28))
 
         try:
             X_test, _, closeprice = low_high(Coin, input_data_length, crop_size=500, sudden_death=0.)
@@ -84,23 +86,13 @@ if __name__ == '__main__':
 
         if len(X_test) != 0:
 
-            #       Data Preprocessing      #
-            X_test = np.array(X_test)
-            X_test2 = np.array(X_test2)
-
-            row = X_test.shape[1]
-            col = X_test.shape[2]
-
-            X_test = X_test.astype('float32').reshape(-1, row, col, 1)
-            X_test2 = X_test2.astype('float32').reshape(-1, row, col, 1)
-            # print(X_test.shape)
-
             Y_pred_ = model.predict(X_test, verbose=1)
             Y_pred2_ = model.predict(X_test2, verbose=1)
 
             max_value = np.max(Y_pred_, axis=0)
             max_value2 = np.max(Y_pred2_, axis=0)
             limit_line = 0.9
+            limit_line2 = 0.9
             Y_pred = np.zeros(len(Y_pred_))
             Y_pred2 = np.zeros(len(Y_pred2_))
             for i in range(len(Y_pred_)):
@@ -109,9 +101,9 @@ if __name__ == '__main__':
                 elif Y_pred_[i][2] > max_value[2] * limit_line:
                     Y_pred[i] = 2
             for i in range(len(Y_pred2_)):
-                if Y_pred2_[i][1] > max_value2[1] * limit_line:
+                if Y_pred2_[i][1] > max_value2[1] * limit_line2:
                     Y_pred2[i] = 1
-                elif Y_pred2_[i][2] > max_value2[2] * limit_line:
+                elif Y_pred2_[i][2] > max_value2[2] * limit_line2:
                     Y_pred2[i] = 2
 
             if get_fig == 1:

@@ -80,7 +80,7 @@ def low_high(Coin, input_data_length, ip_limit=None, trade_limit=None, sudden_de
             group_x = x[i - input_data_length:i]
             dataX.append(group_x)  # dataX 리스트에 추가
 
-        if (len(dataX) < 100) and (trade_limit is not None):
+        if len(dataX) < 100:
             return None, None
 
         X_test = np.array(dataX)

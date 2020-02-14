@@ -102,8 +102,169 @@ def low_high(Coin, input_data_length, ip_limit=None, trade_limit=None, crop_size
         col = X_test.shape[2]
 
         X_test = X_test.astype('float32').reshape(-1, row, col, 1)
+        # closeprice = np.roll(np.array(list(map(lambda x: x[-1][[1]][0], X_test))), -1)
+        # plt.plot(closeprice)
+        # plt.show()
 
         return X_test, closeprice, min_max_scaler(ohlcv_data[crop_size:, [1]])
+
+
+def low_high2(Coin, input_data_length, ip_limit=None, trade_limit=None, crop_size=300, sudden_death=0):
+
+    #   거래 제한은 고점과 저점을 분리한다.
+
+    #   User-Agent Configuration
+    #   IP - Change
+    if ip_limit is None:
+        ohlcv_excel = pybithumb.get_ohlcv(Coin, 'KRW', 'minute1')
+    else:
+        ohlcv_excel = pybithumb.get_ohlcv(Coin, 'KRW', 'minute1', 'proxyon')
+
+    price_gap = ohlcv_excel.close.max() / ohlcv_excel.close.min()
+    if (price_gap < 1.07) and (trade_limit is not None):
+        return None, None, None
+
+    obv = [0] * len(ohlcv_excel)
+    for m in range(1, len(ohlcv_excel)):
+        if ohlcv_excel['close'].iloc[m] > ohlcv_excel['close'].iloc[m - 1]:
+            obv[m] = obv[m - 1] + ohlcv_excel['volume'].iloc[m]
+        elif ohlcv_excel['close'].iloc[m] == ohlcv_excel['close'].iloc[m - 1]:
+            obv[m] = obv[m - 1]
+        else:
+            obv[m] = obv[m - 1] - ohlcv_excel['volume'].iloc[m]
+    ohlcv_excel['OBV'] = obv
+
+    closeprice = ohlcv_excel['close'].iloc[-1]
+
+    # ----------- dataX, dataY 추출하기 -----------#
+    #   OBV :
+    ohlcv_data = ohlcv_excel.values[1:].astype(np.float)
+
+    # 결측 데이터 제외
+    if len(ohlcv_data) != 0:
+
+        #          데이터 전처리         #
+        #   Fixed X_data    #
+        # price = ohlcv_data[:, :4]
+        # volume = ohlcv_data[:, [4]]
+        # OBV = ohlcv_data[:, [-1]]
+        #
+        # scaled_price = min_max_scaler(price)
+        # scaled_volume = min_max_scaler(volume)
+        # scaled_OBV = min_max_scaler(OBV)
+        # print(scaled_MA60.shape)
+
+        # x = np.concatenate((scaled_price, scaled_volume, scaled_OBV), axis=1)  # axis=1, 세로로 합친다
+        # print(x.shape)
+        # print(ohlcv_data.shape)
+        # quit()
+
+        # if (x[-1][1] > 0.3) and (trade_limit is not None):
+        #     return None, None
+
+        # print(x.shape)  # (258, 6)
+        # quit()
+
+        dataX = []  # input_data length 만큼 담을 dataX 그릇
+        for i in range(crop_size, len(ohlcv_data) + 1):  # 마지막 데이터까지 다 긇어모은다.
+            group_x = ohlcv_data[i - crop_size: i]
+            scaled_price = min_max_scaler(group_x[:, :4])
+            scaled_volume = min_max_scaler(group_x[:, [4]])
+            scaled_OBV = min_max_scaler(group_x[:, [-1]])
+            x = np.concatenate((scaled_price, scaled_volume, scaled_OBV), axis=1) + sudden_death  # axis=1, 세로로 합친다
+            # x = scaled_price + sudden_death  # axis=1, 세로로 합친다
+            group_x = x[-input_data_length:]
+            # print(group_x[-1:, 1:2])
+            # print(group_x.shape)
+            # print(group_x.max())
+            dataX.append(group_x)  # dataX 리스트에 추가
+
+        if len(dataX) < 100:
+            return None, None, None
+
+        # quit()
+        X_test = np.array(dataX)
+        row = X_test.shape[1]
+        col = X_test.shape[2]
+
+        X_test = X_test.astype('float32').reshape(-1, row, col, 1)
+
+        return X_test, closeprice, min_max_scaler(ohlcv_data[crop_size:, [1]])
+
+
+def low_high3(Coin, input_data_length, ip_limit=None, trade_limit=None, crop_size=300, sudden_death=0):
+
+    #   거래 제한은 고점과 저점을 분리한다.
+
+    #   User-Agent Configuration
+    #   IP - Change
+    if ip_limit is None:
+        ohlcv_excel = pybithumb.get_ohlcv(Coin, 'KRW', 'minute1')
+    else:
+        ohlcv_excel = pybithumb.get_ohlcv(Coin, 'KRW', 'minute1', 'proxyon')
+
+    price_gap = ohlcv_excel.close.max() / ohlcv_excel.close.min()
+    if (price_gap < 1.07) and (trade_limit is not None):
+        return None, None, None
+
+    obv = [0] * len(ohlcv_excel)
+    for m in range(1, len(ohlcv_excel)):
+        if ohlcv_excel['close'].iloc[m] > ohlcv_excel['close'].iloc[m - 1]:
+            obv[m] = obv[m - 1] + ohlcv_excel['volume'].iloc[m]
+        elif ohlcv_excel['close'].iloc[m] == ohlcv_excel['close'].iloc[m - 1]:
+            obv[m] = obv[m - 1]
+        else:
+            obv[m] = obv[m - 1] - ohlcv_excel['volume'].iloc[m]
+    ohlcv_excel['OBV'] = obv
+
+    closeprice = ohlcv_excel['close'].iloc[-1]
+
+    # ----------- dataX, dataY 추출하기 -----------#
+    #   OBV :
+    ohlcv_data = ohlcv_excel.values[1:].astype(np.float)
+
+    # 결측 데이터 제외
+    if len(ohlcv_data) != 0:
+
+        #          데이터 전처리         #
+        #   Fixed X_data    #
+        price = ohlcv_data[:, :4]
+        volume = ohlcv_data[:, [4]]
+        OBV = ohlcv_data[:, [-1]]
+
+        scaled_price = min_max_scaler(price)
+        scaled_volume = min_max_scaler(volume)
+        scaled_OBV = min_max_scaler(OBV)
+        # print(scaled_MA60.shape)
+
+        # x = np.concatenate((scaled_price, scaled_volume, scaled_OBV), axis=1)  # axis=1, 세로로 합친다
+        x = scaled_price
+        # print(x.shape)
+        # print(ohlcv_data.shape)
+        # quit()
+
+        # if (x[-1][1] > 0.3) and (trade_limit is not None):
+        #     return None, None
+
+        # print(x.shape)  # (258, 6)
+        # quit()
+
+        dataX = []  # input_data length 만큼 담을 dataX 그릇
+        for i in range(input_data_length, len(x) + 1):  # 마지막 데이터까지 다 긇어모은다.
+            group_x = x[i - input_data_length:i]
+            dataX.append(group_x)  # dataX 리스트에 추가
+
+        if len(dataX) < 100:
+            return None, None, None
+
+        # quit()
+        X_test = np.array(dataX)
+        row = X_test.shape[1]
+        col = X_test.shape[2]
+
+        X_test = X_test.astype('float32').reshape(-1, row, col, 1)
+
+        return X_test, closeprice, min_max_scaler(ohlcv_data[input_data_length:, [1]])
 
 
 def made_x(file, input_data_length, model_num, check_span, get_fig, sudden_death=0):
