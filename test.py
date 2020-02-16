@@ -1,9 +1,23 @@
 import pybithumb
 import pandas as pd
+import numpy as np
 from fake_useragent import UserAgent
 import time
 pd.set_option('display.max_rows', 1500)
 
+
+# df_sample = pybithumb.get_ohlcv('BTC', 'KRW', 'minute1')    #.loc['2020-02-16 22:57:00', :]    # 2020-02-16 22:57:00
+df_sample = pd.read_excel('')
+index = df_sample.index.values
+
+# print(index[:20])
+#   finding index number    #
+for i in range(len(index)):
+
+    if index[i] == np.datetime64('2020-02-15T23:19:00.000000000'):
+        print(i)
+
+        break
 
 # start_time = time.time()
 # pybithumb.get_ohlcv('BTC', 'KRW', 'minute1')
@@ -20,8 +34,8 @@ pd.set_option('display.max_rows', 1500)
 #         print('ok')
 #     print(sum(nlist > 1))
 # #     print('ok')
-words_list = list(map(str.upper, ['dkj', 'df']))
-print(words_list)
+# words_list = list(map(str.upper, ['dkj', 'df']))
+# print(words_list)
 # from Make_X4 import low_high
 # X_test, buy_price = low_high('PCM', 54, 'proxy')
 # nlist =

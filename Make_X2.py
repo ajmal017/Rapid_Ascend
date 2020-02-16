@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import warnings
 from sklearn.preprocessing import MinMaxScaler
 from datetime import datetime
+from Funcs_CNN4 import obv
 warnings.filterwarnings("ignore")
 pd.set_option('display.max_rows', 500)
 
@@ -49,6 +50,7 @@ def low_high(Coin, input_data_length, ip_limit=None, trade_limit=None, crop_size
     ohlcv_excel['OBV'] = obv
 
     closeprice = ohlcv_excel['close'].iloc[-1]
+    datetime_list = ohlcv_excel.index.values
 
     # ----------- dataX, dataY 추출하기 -----------#
     #   OBV :
@@ -94,7 +96,7 @@ def low_high(Coin, input_data_length, ip_limit=None, trade_limit=None, crop_size
             dataX.append(group_x)  # dataX 리스트에 추가
 
         if len(dataX) < 100:
-            return None, None, None
+            return None, None, None, None
 
         # quit()
         X_test = np.array(dataX)
@@ -106,7 +108,7 @@ def low_high(Coin, input_data_length, ip_limit=None, trade_limit=None, crop_size
         # plt.plot(closeprice)
         # plt.show()
 
-        return X_test, closeprice, min_max_scaler(ohlcv_data[crop_size:, [1]])
+        return X_test, closeprice, min_max_scaler(ohlcv_data[crop_size:, [1]]), datetime_list
 
 
 def low_high2(Coin, input_data_length, ip_limit=None, trade_limit=None, crop_size=300, sudden_death=0):
@@ -192,7 +194,7 @@ def low_high2(Coin, input_data_length, ip_limit=None, trade_limit=None, crop_siz
         return X_test, closeprice, min_max_scaler(ohlcv_data[crop_size:, [1]])
 
 
-def low_high3(Coin, input_data_length, ip_limit=None, trade_limit=None, crop_size=300, sudden_death=0):
+def low_high_origin(Coin, input_data_length, ip_limit=None, trade_limit=None, crop_size=300, sudden_death=0):
 
     #   거래 제한은 고점과 저점을 분리한다.
 
@@ -264,15 +266,15 @@ def low_high3(Coin, input_data_length, ip_limit=None, trade_limit=None, crop_siz
 
         X_test = X_test.astype('float32').reshape(-1, row, col, 1)
 
-        return X_test, closeprice, min_max_scaler(ohlcv_data[input_data_length:, [1]])
+        return X_test, closeprice, min_max_scaler(ohlcv_data[input_data_length:, [1]]), _
 
 
-def made_x(file, input_data_length, model_num, check_span, get_fig, sudden_death=0):
+def made_x(file, input_data_length, model_num, check_span, get_fig, crop_size=500, sudden_death=0):
 
     ohlcv_excel = pd.read_excel(dir + file, index_col=0)
 
     # ohlcv_excel['CMO'] = cmo(ohlcv_excel)
-    ohlcv_excel['OBV'] = obv(ohlcv_excel)
+    # ohlcv_excel['OBV'] = obv(ohlcv_excel)
     # ohlcv_excel['RSI'] = rsi(ohlcv_excel)
 
     # print(ohlcv_excel)
@@ -308,7 +310,8 @@ def made_x(file, input_data_length, model_num, check_span, get_fig, sudden_death
 
     # NaN 제외하고 데이터 자르기 (데이터가 PIXEL 로 들어간다고 생각하면 된다)
     #   OBV : -CHECK_SPAN
-    ohlcv_data = ohlcv_excel.values[1: -check_span].astype(np.float)
+    ohlcv_data = ohlcv_excel.values[: -check_span].astype(np.float)
+    # ohlcv_data = ohlcv_excel.values[1: -check_span].astype(np.float)
     # ohlcv_data = ohlcv_excel.values[sum(ohlcv_excel.CMO.isna()): -check_span].astype(np.float)
     # ohlcv_data = ohlcv_excel.values[sum(ohlcv_excel.RSI.isna()): -check_span].astype(np.float)
 
@@ -323,48 +326,50 @@ def made_x(file, input_data_length, model_num, check_span, get_fig, sudden_death
         #          데이터 전처리         #
         #   Fixed X_data    #
         price = ohlcv_data[:, :4]
-        volume = ohlcv_data[:, [4]]
+        # volume = ohlcv_data[:, [4]]
         # CMO = ohlcv_data[:, [-2]]
-        OBV = ohlcv_data[:, [-2]]
+        # OBV = ohlcv_data[:, [-2]]
         # RSI = ohlcv_data[:, [-2]]
 
         #   Flexible Y_data    #
         trade_state = ohlcv_data[:, [-1]]
 
-        scaled_price = min_max_scaler(price)
-        scaled_volume = min_max_scaler(volume)
+        # scaled_price = min_max_scaler(price)
+        # scaled_volume = min_max_scaler(volume)
         # scaled_CMO = min_max_scaler(CMO)
-        scaled_OBV = min_max_scaler(OBV)
+        # scaled_OBV = min_max_scaler(OBV)
         # scaled_RSI = min_max_scaler(RSI)
 
-        x = np.concatenate((scaled_price, scaled_volume, scaled_OBV), axis=1)  # axis=1, 세로로 합친다
+        # x = np.concatenate((scaled_price, scaled_volume, scaled_OBV), axis=1)  # axis=1, 세로로 합친다
+        # x = scaled_price
         y = trade_state
         # print(x.shape, y_low.shape)  # (258, 6) (258, 1)
         # quit()
 
         dataX = []  # input_data length 만큼 담을 dataX 그릇
         dataY = []  # Target 을 담을 그릇
-        crop_size = 300
         for i in range(crop_size, len(ohlcv_data)):  # 마지막 데이터까지 다 긇어모은다.
             group_x = ohlcv_data[i - crop_size: i]
             group_y = y[i]
             scaled_price = min_max_scaler(group_x[:, :4])
-            scaled_volume = min_max_scaler(group_x[:, [4]])
-            scaled_OBV = min_max_scaler(group_x[:, [-1]])
-            x = np.concatenate((scaled_price, scaled_volume, scaled_OBV), axis=1) + sudden_death  # axis=1, 세로로 합친다
+            x = scaled_price + sudden_death  # axis=1, 세로로 합친다
             group_x = x[-input_data_length:]
 
-            #   데이터 값에 결측치가 존재하는 경우 #
-            if sum(sum(np.isnan(group_x))) > 0:
-                return None
             dataX.append(group_x)  # dataX 리스트에 추가
             dataY.append(group_y)
 
         if len(dataX) < 100:
-            return None
+            return None, None, None
+
+        X_test = np.array(dataX)
+        row = X_test.shape[1]
+        col = X_test.shape[2]
+
+        X_test = X_test.astype('float32').reshape(-1, row, col, 1)
+        # print(X_test.shape)
 
         #       Exstracting fiexd X_data       #
-        sliced_ohlcv = ohlcv_data[crop_size:, :6]
+        sliced_ohlcv = ohlcv_data[crop_size:, :4]
 
         #                      Get Figure                     #
         if get_fig == 1:
@@ -391,14 +396,14 @@ def made_x(file, input_data_length, model_num, check_span, get_fig, sudden_death
 
             plt.subplot(211)
             plt.plot(min_max_scaler(ohlcv_data[:, 1:2]), 'r', label='close')
-            plt.plot(scaled_OBV, 'b', label='OBV')
+            # plt.plot(scaled_OBV, 'b', label='OBV')
             plt.legend(loc='upper right')
             for i in range(len(spanlist_low)):
                 plt.axvspan(spanlist_low[i][0], spanlist_low[i][1], facecolor='m', alpha=0.5)
 
             plt.subplot(212)
             plt.plot(min_max_scaler(ohlcv_data[:, 1:2]), 'r', label='close')
-            plt.plot(scaled_OBV, 'b', label='OBV')
+            # plt.plot(scaled_OBV, 'b', label='OBV')
             plt.legend(loc='upper right')
             for i in range(len(spanlist_high)):
                 plt.axvspan(spanlist_high[i][0], spanlist_high[i][1], facecolor='c', alpha=0.5)
@@ -410,14 +415,14 @@ def made_x(file, input_data_length, model_num, check_span, get_fig, sudden_death
             # plt.show()
             # ----------- Chart 그리기 -----------#
 
-        return dataX, dataY, sliced_ohlcv
+        return X_test, dataY, sliced_ohlcv
 
 
 if __name__ == '__main__':
 
     # ----------- Params -----------#
     input_data_length = 54
-    model_num = 21
+    model_num = 23
 
     #       Make folder      #
     try:
@@ -441,7 +446,8 @@ if __name__ == '__main__':
         # file = '2019-10-27 LAMB ohlcv.xlsx'
 
         # result = made_x(file, input_data_length, model_num, check_span, get_fig)
-        result = low_high('ETZ', input_data_length)
+        result = low_high('dvp'.upper(), input_data_length)
+        # print(result)
         quit()
 
         # ------------ 데이터가 있으면 dataX, dataY 병합하기 ------------#

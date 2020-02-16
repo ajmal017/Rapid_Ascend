@@ -14,11 +14,16 @@ ohlcv_list = os.listdir(dir)
 
 if __name__ == '__main__':
 
+    #           PARAMS           #
     input_data_length = 54
     # model_num = input('Press model num : ')
-    model_num = 21
-
-    #           PARAMS           #
+    model_num = 23
+    crop_size = 500
+    crop_size2 = 70
+    limit_line = 0.9
+    limit_line2 = 0.45
+    sudden_death = 0.
+    sudden_death2 = 0
     check_span = 30
     get_fig = 1
 
@@ -36,7 +41,9 @@ if __name__ == '__main__':
     except_list = os.listdir('./pred_ohlcv/%s_%s' % (input_data_length, model_num))
 
     #       LOAD MODEL      #
-    model = load_model('./model/rapid_ascending %s_%s.hdf5' % (input_data_length, model_num))
+    model = load_model('./model/rapid_ascending %s_%s - 3.99.hdf5' % (input_data_length, model_num))
+
+    ohlcv_list = ['2019-10-05 LAMB ohlcv.xlsx']
 
     for file in ohlcv_list:
 
@@ -46,14 +53,18 @@ if __name__ == '__main__':
         print('loading %s' % file)
 
         try:
-            X_test, Y_test, sliced_ohlcv = made_x(file, input_data_length, model_num, check_span, 0)
+            X_test, _, sliced_ohlc = made_x(file, input_data_length, model_num, check_span, 0, crop_size=crop_size, sudden_death=sudden_death)
+            X_test2, _, sliced_ohlc2 = made_x(file, input_data_length, model_num, check_span, 0, crop_size=crop_size2, sudden_death=sudden_death2)
+            # X_test, _ = low_high(Coin, input_data_length, sudden_death=1.)
+            # closeprice = np.roll(np.array(list(map(lambda x: x[-1][[1]][0], X_test))), -1)
+            # print(X_test)
+            if X_test is None:
+                continue
 
         except Exception as e:
             print('Error in getting data from made_x :', e)
-            continue
 
-        closeprice = np.roll(np.array(list(map(lambda x: x[-1][[1]][0], X_test))), -1)
-        OBV = np.roll(np.array(list(map(lambda x: x[-1][[5]][0], X_test))), -1)
+        # OBV = np.roll(np.array(list(map(lambda x: x[-1][[5]][0], X_test))), -1)
 
         # dataX 에 담겨있는 value 에 [-1] : 바로 이전의 행 x[-1][:].shape = (1, 6)
         # sliced_ohlcv = np.array(list(map(lambda x: x[-1][:], X_test)))
@@ -62,35 +73,34 @@ if __name__ == '__main__':
 
         if len(X_test) != 0:
 
-            X_test = np.array(X_test)
-
-            row = X_test.shape[1]
-            col = X_test.shape[2]
-
-            X_test = X_test.astype('float32').reshape(-1, row, col, 1)
-            # print(X_test.shape)
-
             Y_pred_ = model.predict(X_test, verbose=1)
+            Y_pred2_ = model.predict(X_test2, verbose=1)
+
             max_value = np.max(Y_pred_, axis=0)
-            limit_line = 0.9
+            max_value2 = np.max(Y_pred2_, axis=0)
             Y_pred = np.zeros(len(Y_pred_))
+            Y_pred2 = np.zeros(len(Y_pred2_))
             for i in range(len(Y_pred_)):
                 if Y_pred_[i][1] > max_value[1] * limit_line:
                     Y_pred[i] = 1
                 elif Y_pred_[i][2] > max_value[2] * limit_line:
                     Y_pred[i] = 2
-            # print(Y_pred_[:2])
-            # quit()
+            for i in range(len(Y_pred2_)):
+                if Y_pred2_[i][1] > max_value2[1] * limit_line2:
+                    Y_pred2[i] = 1
+                elif Y_pred2_[i][2] > max_value2[2] * limit_line2:
+                    Y_pred2[i] = 2
 
             #       Save Pred_ohlcv      #
             #   기존에 pybithumb 을 통해서 제공되던 ohlcv 와는 조금 다르다 >> 이전 데이터와 현재 y 데이터 행이 같다.
             sliced_Y = Y_pred.reshape(-1, 1)
-            pred_ohlcv = np.concatenate((sliced_ohlcv, sliced_Y), axis=1)  # axis=1 가로로 합친다
+            sliced_Y2 = Y_pred2.reshape(-1, 1)[-len(sliced_Y):]
+            pred_ohlcv = np.concatenate((sliced_ohlc, sliced_Y, sliced_Y2), axis=1)  # axis=1 가로로 합친다
 
             #   col 이 7이 아닌 데이터 걸러주기
             try:
                 pred_ohlcv_df = pd.DataFrame(pred_ohlcv,
-                                             columns=['open', 'close', 'high', 'low', 'volume', 'OBV', 'trade_state'])
+                                             columns=['open', 'close', 'high', 'low', 'low_state', 'high_state'])
 
             except Exception as e:
                 print(e)
@@ -113,7 +123,7 @@ if __name__ == '__main__':
                             spanlist_low.append((m - 1, m))
 
                 for m in range(len(Y_pred)):
-                    if (Y_pred[m] > 1.5) and (Y_pred[m] < 2.5):
+                    if (Y_pred2[m] > 1.5) and (Y_pred2[m] < 2.5):
                         if m + 1 < len(Y_pred):
                             spanlist_high.append((m, m + 1))
                         else:
@@ -121,16 +131,16 @@ if __name__ == '__main__':
 
                 plt.subplot(211)
                 # plt.subplot(313)
-                plt.plot(closeprice, 'r', label='close')
-                plt.plot(OBV, 'b', label='OBV')
+                plt.plot(sliced_ohlc[:, [1]], 'r', label='close')
+                # plt.plot(OBV, 'b', label='OBV')
                 plt.legend(loc='upper right')
                 for i in range(len(spanlist_low)):
                     plt.axvspan(spanlist_low[i][0], spanlist_low[i][1], facecolor='c', alpha=0.5)
 
                 plt.subplot(212)
                 # plt.subplot(313)
-                plt.plot(closeprice, 'r', label='close')
-                plt.plot(OBV, 'b', label='OBV')
+                plt.plot(sliced_ohlc2[:, [1]], 'r', label='close')
+                # plt.plot(OBV, 'b', label='OBV')
                 plt.legend(loc='upper right')
                 for i in range(len(spanlist_high)):
                     plt.axvspan(spanlist_high[i][0], spanlist_high[i][1], facecolor='m', alpha=0.5)

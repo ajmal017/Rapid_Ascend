@@ -23,6 +23,13 @@ with open("Keys.txt") as f:
 #       Params      #
 input_data_length = 54
 model_num = 23
+crop_size_low = 500     # 적당히 크면 안정적
+crop_size_high = 300    # 작을수록 손절모드에 적합하다 : LIMIT_LINE 과 조합해서 사용해야한다.
+crop_size_sudden_death = 100    # 작을수록 손절모드에 적합하다 : LIMIT_LINE 과 조합해서 사용해야한다.
+limit_line_low = 0.97   # 최저점 선정 모드
+limit_line_high = 0.8   # 익절 모드
+limit_line_sudden_death = 0.45  # 손절 모드
+check_span = 30
 
 #       Trade Info      #
 #                                           Check The Money                                              #
@@ -32,7 +39,7 @@ sell_wait = 300  # minute
 Profits = 1.0
 
 #       Model Fitting       #
-model = load_model('./model/rapid_ascending %s_%s.hdf5' % (input_data_length, model_num))
+model = load_model('./model/rapid_ascending %s_%s - 4.39.hdf5' % (input_data_length, model_num))
 
 while True:
 
@@ -78,14 +85,14 @@ while True:
                 #   closeprice 가 MinMaxScaler() 로 0.3 보다 크면 predict 하지 않는다.
                 #   ohlcv_data_length 가 100 이하이면 predict 하지 않는다.
                 if (datetime.now().minute % 5) in [0, 1, 2]:
-                    X_test, buy_price, _ = low_high(Coin, input_data_length, crop_size=500, sudden_death=0.)  # TopCoin 으로 제약조건을 걸어서 trade_limit==0
+                    X_test, buy_price, _, start_datetime_list = low_high(Coin, input_data_length, crop_size=crop_size_low, sudden_death=0.)  # TopCoin 으로 제약조건을 걸어서 trade_limit==0
                 else:
-                    X_test, buy_price, _ = low_high(Coin, input_data_length, 'proxy', crop_size=500, sudden_death=0.)
+                    X_test, buy_price, _, start_datetime_list = low_high(Coin, input_data_length, 'proxy', crop_size=crop_size_low, sudden_death=0.)
 
                 if X_test is not None:
                     Y_pred_ = model.predict(X_test, verbose=1)
                     max_value = np.max(Y_pred_, axis=0)
-                    limit_line = 0.9
+                    limit_line = limit_line_low
 
                     if Y_pred_[-1][1] > max_value[1] * limit_line:
                         break
@@ -211,6 +218,9 @@ while True:
     #                    매수 체결                     #
     else:
 
+        find_new_low = 1
+        check_new_low = 0
+        limit_line = limit_line_high
         #           매도 대기           #
         while True:
             # 분당 한번 high_check predict 했을때, 1 결과값이 출력되면 매도 진행
@@ -219,23 +229,51 @@ while True:
                 if datetime.now().second == 55:
                     while True:
                         try:
-                            #       Sudden_Death Rule 적용      #
-                            if time.time() - start > sell_wait * 60:
-                                X_test, _, _ = low_high(Coin, input_data_length, crop_size=100, sudden_death=0.)
-                                limit_line = 0.5
+                            if find_new_low == 1:
+                                X_test_high, _, _, end_datetime_list = low_high(Coin, input_data_length,
+                                                                                crop_size=crop_size_high,
+                                                                                sudden_death=0.)
+
+                                #       Start_datetime 의 인덱스 번호 찾기      #
+                                for i in range(len(end_datetime_list)):
+                                    if end_datetime_list[i] == start_datetime_list[-1]:
+
+                                        #       len(end_datetime_list) - 시작 인덱스 > check_span 이고 저점이 갱신되면 손절 모드       #
+                                        if len(end_datetime_list) - i > check_span:
+                                            X_test_low, _, _, _ = low_high(Coin, input_data_length,
+                                                                                                 crop_size=crop_size_low,
+                                                                                                 sudden_death=0.)
+                                            check_new_low = 1
+                                            #     X_test, _, _, end_datetime_list = low_high(Coin, input_data_length,
+                                            #     crop_size=crop_size_high, sudden_death=0.)
+                                        break
                             else:
-                                X_test, _, _ = low_high(Coin, input_data_length, crop_size=100, sudden_death=0.)
+                                X_test_high, _, _, _ = low_high(Coin, input_data_length,
+                                                                                crop_size=crop_size_sudden_death,
+                                                                                sudden_death=0.)
                             break
 
                         except Exception as e:
                             print('Error in getting low_high data :', e)
                             time.sleep(random.random() * 5)
 
-                    Y_pred_ = model.predict(X_test, verbose=3)
-                    max_value = np.max(Y_pred_, axis=0)
+                    #       check_span 지나면 저점 갱신 확인        #
+                    if check_new_low == 1:
+                        Y_pred_low_ = model.predict(X_test_low, verbose=1)
+                        max_value_low = np.max(Y_pred_low_, axis=0)
+
+                        if Y_pred_low_[-1][1] > max_value_low[1] * limit_line_low:
+                            limit_line = limit_line_sudden_death
+                            X_test_high, _, _, _ = low_high(Coin, input_data_length,
+                                                                            crop_size=crop_size_sudden_death, sudden_death=0.)
+                            find_new_low = 0
+                            check_new_low = 0
+
+                    Y_pred_high_ = model.predict(X_test_high, verbose=1)
+                    max_value_high = np.max(Y_pred_high_, axis=0)
 
                     #   매도 진행
-                    if Y_pred_[-1][2] > max_value[2] * limit_line:
+                    if Y_pred_high_[-1][2] > max_value_high[2] * limit_line:
                         balance = bithumb.get_balance(Coin)
                         sellunit = int((balance[0]) * 10000) / 10000.0
                         SellOrder = bithumb.sell_market_order(Coin, sellunit, 'KRW')
