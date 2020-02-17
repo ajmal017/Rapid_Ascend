@@ -3,7 +3,7 @@ import pandas as pd
 from keras.models import load_model
 from matplotlib import pyplot as plt
 import os
-from Make_X2 import made_x
+from Make_X2 import made_x, made_x_origin, made_x_ma
 from keras.utils import np_utils
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -18,11 +18,12 @@ if __name__ == '__main__':
     input_data_length = 54
     # model_num = input('Press model num : ')
     model_num = 23
+    model_num2 = 33
     crop_size = 500
-    crop_size2 = 70
-    limit_line = 0.9
-    limit_line2 = 0.45
-    sudden_death = 0.
+    crop_size2 = 300
+    limit_line = 0.97
+    limit_line2 = 0.65
+    sudden_death = 0
     sudden_death2 = 0
     check_span = 30
     get_fig = 1
@@ -34,7 +35,7 @@ if __name__ == '__main__':
         pass
 
     try:
-        os.mkdir('./Figure_pred/%s_%s/' % (input_data_length, model_num))
+        os.mkdir('./Figure_pred/%s_%s/' % (input_data_length, model_num2))
     except Exception as e:
         pass
 
@@ -42,8 +43,9 @@ if __name__ == '__main__':
 
     #       LOAD MODEL      #
     model = load_model('./model/rapid_ascending %s_%s - 3.99.hdf5' % (input_data_length, model_num))
+    model2 = load_model('./model/rapid_ascending %s_%s.hdf5' % (input_data_length, model_num2))
 
-    ohlcv_list = ['2019-10-05 LAMB ohlcv.xlsx']
+    # ohlcv_list = ['2019-10-14 PPT ohlcv.xlsx']
 
     for file in ohlcv_list:
 
@@ -53,13 +55,11 @@ if __name__ == '__main__':
         print('loading %s' % file)
 
         try:
-            X_test, _, sliced_ohlc = made_x(file, input_data_length, model_num, check_span, 0, crop_size=crop_size, sudden_death=sudden_death)
-            X_test2, _, sliced_ohlc2 = made_x(file, input_data_length, model_num, check_span, 0, crop_size=crop_size2, sudden_death=sudden_death2)
+            X_test, _, sliced_ohlc = made_x_ma(file, input_data_length, model_num, check_span, 0, crop_size=crop_size, sudden_death=sudden_death)
+            X_test2, _, sliced_ohlc2 = made_x_ma(file, input_data_length, model_num, check_span, 0, crop_size=crop_size2, sudden_death=sudden_death2)
             # X_test, _ = low_high(Coin, input_data_length, sudden_death=1.)
             # closeprice = np.roll(np.array(list(map(lambda x: x[-1][[1]][0], X_test))), -1)
             # print(X_test)
-            if X_test is None:
-                continue
 
         except Exception as e:
             print('Error in getting data from made_x :', e)
@@ -71,10 +71,13 @@ if __name__ == '__main__':
         # print(sliced_ohlcv)
         # quit()
 
+        if X_test is None:
+            continue
+
         if len(X_test) != 0:
 
-            Y_pred_ = model.predict(X_test, verbose=1)
-            Y_pred2_ = model.predict(X_test2, verbose=1)
+            Y_pred_ = model2.predict(X_test, verbose=1)
+            Y_pred2_ = model2.predict(X_test2, verbose=1)
 
             max_value = np.max(Y_pred_, axis=0)
             max_value2 = np.max(Y_pred2_, axis=0)
@@ -95,19 +98,19 @@ if __name__ == '__main__':
             #   기존에 pybithumb 을 통해서 제공되던 ohlcv 와는 조금 다르다 >> 이전 데이터와 현재 y 데이터 행이 같다.
             sliced_Y = Y_pred.reshape(-1, 1)
             sliced_Y2 = Y_pred2.reshape(-1, 1)[-len(sliced_Y):]
-            pred_ohlcv = np.concatenate((sliced_ohlc, sliced_Y, sliced_Y2), axis=1)  # axis=1 가로로 합친다
+            # pred_ohlcv = np.concatenate((sliced_ohlc, sliced_Y, sliced_Y2), axis=1)  # axis=1 가로로 합친다
 
             #   col 이 7이 아닌 데이터 걸러주기
-            try:
-                pred_ohlcv_df = pd.DataFrame(pred_ohlcv,
-                                             columns=['open', 'close', 'high', 'low', 'low_state', 'high_state'])
-
-            except Exception as e:
-                print(e)
-                continue
-            # print(pred_ohlcv_df.tail(20))
-            # quit()
-            pred_ohlcv_df.to_excel('./pred_ohlcv/%s_%s/%s' % (input_data_length, model_num, file))
+            # try:
+            #     pred_ohlcv_df = pd.DataFrame(pred_ohlcv,
+            #                                  columns=['open', 'close', 'high', 'low', 'low_state', 'high_state'])
+            #
+            # except Exception as e:
+            #     print(e)
+            #     continue
+            # # print(pred_ohlcv_df.tail(20))
+            # # quit()
+            # pred_ohlcv_df.to_excel('./pred_ohlcv/%s_%s/%s' % (input_data_length, model_num, file))
 
             # Y_pred 에 1 이 존재하면, Plot Comparing
             if get_fig == 1:
@@ -122,32 +125,32 @@ if __name__ == '__main__':
                         else:
                             spanlist_low.append((m - 1, m))
 
-                for m in range(len(Y_pred)):
+                for m in range(len(Y_pred2)):
                     if (Y_pred2[m] > 1.5) and (Y_pred2[m] < 2.5):
-                        if m + 1 < len(Y_pred):
+                        if m + 1 < len(Y_pred2):
                             spanlist_high.append((m, m + 1))
                         else:
                             spanlist_high.append((m - 1, m))
 
                 plt.subplot(211)
                 # plt.subplot(313)
-                plt.plot(sliced_ohlc[:, [1]], 'r', label='close')
-                # plt.plot(OBV, 'b', label='OBV')
+                plt.plot(sliced_ohlc[:, [1]], 'gold', label='close')
+                plt.plot(sliced_ohlc[:, [4]], 'b', label='MA')
                 plt.legend(loc='upper right')
                 for i in range(len(spanlist_low)):
-                    plt.axvspan(spanlist_low[i][0], spanlist_low[i][1], facecolor='c', alpha=0.5)
+                    plt.axvspan(spanlist_low[i][0], spanlist_low[i][1], facecolor='c', alpha=0.7)
 
                 plt.subplot(212)
                 # plt.subplot(313)
-                plt.plot(sliced_ohlc2[:, [1]], 'r', label='close')
-                # plt.plot(OBV, 'b', label='OBV')
+                plt.plot(sliced_ohlc2[:, [1]], 'gold', label='close')
+                plt.plot(sliced_ohlc[:, [4]], 'b', label='MA')
                 plt.legend(loc='upper right')
                 for i in range(len(spanlist_high)):
-                    plt.axvspan(spanlist_high[i][0], spanlist_high[i][1], facecolor='m', alpha=0.5)
+                    plt.axvspan(spanlist_high[i][0], spanlist_high[i][1], facecolor='m', alpha=0.7)
 
                 Date = file.split()[0]
                 Coin = file.split()[1].split('.')[0]
-                plt.savefig('./Figure_pred/%s_%s/%s %s.png' % (input_data_length, model_num, Date, Coin), dpi=500)
+                plt.savefig('./Figure_pred/%s_%s/%s %s.png' % (input_data_length, model_num2, Date, Coin), dpi=500)
                 plt.close()
 
 

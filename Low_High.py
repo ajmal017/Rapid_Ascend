@@ -27,15 +27,14 @@ crop_size_low = 500     # 적당히 크면 안정적
 crop_size_high = 300    # 작을수록 손절모드에 적합하다 : LIMIT_LINE 과 조합해서 사용해야한다.
 crop_size_sudden_death = 100    # 작을수록 손절모드에 적합하다 : LIMIT_LINE 과 조합해서 사용해야한다.
 limit_line_low = 0.97   # 최저점 선정 모드
-limit_line_high = 0.8   # 익절 모드
+limit_line_high = 0.65   # 익절 모드
 limit_line_sudden_death = 0.45  # 손절 모드
-check_span = 30
+check_span = 50
 
 #       Trade Info      #
 #                                           Check The Money                                              #
-CoinVolume = 15
+CoinVolume = 10
 buy_wait = 10  # minute
-sell_wait = 300  # minute
 Profits = 1.0
 
 #       Model Fitting       #
@@ -238,14 +237,12 @@ while True:
                                 for i in range(len(end_datetime_list)):
                                     if end_datetime_list[i] == start_datetime_list[-1]:
 
-                                        #       len(end_datetime_list) - 시작 인덱스 > check_span 이고 저점이 갱신되면 손절 모드       #
+                                        #       len(end_datetime_list) - 시작 인덱스 > check_span 이면 저점 갱신 확인       #
                                         if len(end_datetime_list) - i > check_span:
                                             X_test_low, _, _, _ = low_high(Coin, input_data_length,
                                                                                                  crop_size=crop_size_low,
                                                                                                  sudden_death=0.)
                                             check_new_low = 1
-                                            #     X_test, _, _, end_datetime_list = low_high(Coin, input_data_length,
-                                            #     crop_size=crop_size_high, sudden_death=0.)
                                         break
                             else:
                                 X_test_high, _, _, _ = low_high(Coin, input_data_length,
@@ -259,7 +256,7 @@ while True:
 
                     #       check_span 지나면 저점 갱신 확인        #
                     if check_new_low == 1:
-                        Y_pred_low_ = model.predict(X_test_low, verbose=1)
+                        Y_pred_low_ = model.predict(X_test_low, verbose=3)
                         max_value_low = np.max(Y_pred_low_, axis=0)
 
                         if Y_pred_low_[-1][1] > max_value_low[1] * limit_line_low:
@@ -269,7 +266,7 @@ while True:
                             find_new_low = 0
                             check_new_low = 0
 
-                    Y_pred_high_ = model.predict(X_test_high, verbose=1)
+                    Y_pred_high_ = model.predict(X_test_high, verbose=3)
                     max_value_high = np.max(Y_pred_high_, axis=0)
 
                     #   매도 진행
