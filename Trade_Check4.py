@@ -17,29 +17,29 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 if __name__ == '__main__':
 
     #           Making TopCoin List         #
-    Coinlist = pybithumb.get_tickers()
-    Fluclist = []
-    while True:
-        try:
-            for Coin in Coinlist:
-                tickerinfo = pybithumb.PublicApi.ticker(Coin)
-                data = tickerinfo['data']
-                fluctate = data['fluctate_rate_24H']
-                Fluclist.append(fluctate)
-                time.sleep(1 / 90)
-            break
-
-        except Exception as e:
-            Fluclist.append(None)
-            print('Error in making Topcoin :', e)
-
-    Fluclist = list(map(float, Fluclist))
-    series = pd.Series(Fluclist, Coinlist)
-    series = series.sort_values(ascending=False)
-
-    series = series[:20]
-    TopCoin = list(series.index)
-    # TopCoin = list(map(str.upper, ['ipx']))
+    # Coinlist = pybithumb.get_tickers()
+    # Fluclist = []
+    # while True:
+    #     try:
+    #         for Coin in Coinlist:
+    #             tickerinfo = pybithumb.PublicApi.ticker(Coin)
+    #             data = tickerinfo['data']
+    #             fluctate = data['fluctate_rate_24H']
+    #             Fluclist.append(fluctate)
+    #             time.sleep(1 / 90)
+    #         break
+    #
+    #     except Exception as e:
+    #         Fluclist.append(None)
+    #         print('Error in making Topcoin :', e)
+    #
+    # Fluclist = list(map(float, Fluclist))
+    # series = pd.Series(Fluclist, Coinlist)
+    # series = series.sort_values(ascending=False)
+    #
+    # series = series[:20]
+    # TopCoin = list(series.index)
+    TopCoin = list(map(str.upper, ['BHP']))
 
     for Coin in TopCoin:
 
@@ -48,11 +48,11 @@ if __name__ == '__main__':
         # input_data_length = int(input("Input Data Length : "))
         # model_num = input('Press model number : ')
         model_num = 23
-        model_num2 = 33
+        model_num2 = 34
         crop_size_low = 500
         crop_size_high = 300
         crop_size_sudden_death = 100
-        limit_line_low = 0.97
+        limit_line_low = 0.9
         limit_line_high = 0.65
         limit_line_sudden_death = 0.45
         get_fig = 1
@@ -66,7 +66,8 @@ if __name__ == '__main__':
             pass
 
         #       LOAD MODEL      #
-        model = load_model('./model/rapid_ascending %s_%s - 4.39.hdf5' % (input_data_length, model_num))
+        # model = load_model('./model/rapid_ascending %s_%s - 4.39.hdf5' % (input_data_length, model_num))
+        model = load_model('./model/rapid_ascending %s_%s.hdf5' % (input_data_length, model_num))
         model2 = load_model('./model/rapid_ascending %s_%s.hdf5' % (input_data_length, model_num2))
 
         try:

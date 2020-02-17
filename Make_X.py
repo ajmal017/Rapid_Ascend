@@ -96,17 +96,17 @@ def made_x(file, input_data_length, model_num, check_span, Range_fluc, get_fig):
 
     ohlcv_excel = pd.read_excel(dir + file, index_col=0)
 
-    obv = [0] * len(ohlcv_excel)
-    for m in range(1, len(ohlcv_excel)):
-        if ohlcv_excel['close'].iloc[m] > ohlcv_excel['close'].iloc[m - 1]:
-            obv[m] = obv[m - 1] + ohlcv_excel['volume'].iloc[m]
-        elif ohlcv_excel['close'].iloc[m] == ohlcv_excel['close'].iloc[m - 1]:
-            obv[m] = obv[m - 1]
-        else:
-            obv[m] = obv[m - 1] - ohlcv_excel['volume'].iloc[m]
-    ohlcv_excel['OBV'] = obv
-
-    ohlcv_excel['MA60'] = ohlcv_excel['close'].rolling(60).mean()
+    # obv = [0] * len(ohlcv_excel)
+    # for m in range(1, len(ohlcv_excel)):
+    #     if ohlcv_excel['close'].iloc[m] > ohlcv_excel['close'].iloc[m - 1]:
+    #         obv[m] = obv[m - 1] + ohlcv_excel['volume'].iloc[m]
+    #     elif ohlcv_excel['close'].iloc[m] == ohlcv_excel['close'].iloc[m - 1]:
+    #         obv[m] = obv[m - 1]
+    #     else:
+    #         obv[m] = obv[m - 1] - ohlcv_excel['volume'].iloc[m]
+    # ohlcv_excel['OBV'] = obv
+    #
+    # ohlcv_excel['MA60'] = ohlcv_excel['close'].rolling(60).mean()
 
     # 이후 check_span 개 데이터의 고 / 저점의 폭
     ohlcv_excel['fluc_close'] = ohlcv_excel['close'].shift(-check_span).rolling(check_span).max() / \
@@ -120,7 +120,8 @@ def made_x(file, input_data_length, model_num, check_span, Range_fluc, get_fig):
 
     # NaN 제외하고 데이터 자르기 (데이터가 PIXEL 로 들어간다고 생각하면 된다)
     # MA60 부터 FLUC_CLOSE, 존재하는 값만 슬라이싱
-    ohlcv_data = ohlcv_excel.values[ohlcv_excel['MA60'].isnull().sum(): -check_span].astype(np.float)
+    # ohlcv_data = ohlcv_excel.values[ohlcv_excel['MA60'].isnull().sum(): -check_span].astype(np.float)
+    ohlcv_data = ohlcv_excel.values[:-check_span].astype(np.float)
     # print(len(ohlcv_data))
     # print(list(map(float, ohlcv_data[0])))
     # quit()
@@ -131,23 +132,25 @@ def made_x(file, input_data_length, model_num, check_span, Range_fluc, get_fig):
         #           데이터 전처리         #
         #       x data      #
         price = ohlcv_data[:, :4]
-        volume = ohlcv_data[:, [4]]
-        OBV = ohlcv_data[:, [-3]]
-        MA60 = ohlcv_data[:, [-2]]
+        # volume = ohlcv_data[:, [4]]
+        # OBV = ohlcv_data[:, [-3]]
+        # MA60 = ohlcv_data[:, [-2]]
 
         #       y data      #
         fluc_close = ohlcv_data[:, [-1]]
 
         scaled_price = min_max_scaler(price)
-        scaled_volume = min_max_scaler(volume)
-        scaled_OBV = min_max_scaler(OBV)
-        scaled_MA60 = min_max_scaler(MA60)
+        # scaled_volume = min_max_scaler(volume)
+        # scaled_OBV = min_max_scaler(OBV)
+        # scaled_MA60 = min_max_scaler(MA60)
         # print(scaled_MA60.shape)
 
         # print(fluc_close.shape)
 
-        x = np.concatenate((scaled_price, scaled_volume, scaled_OBV), axis=1)  # axis=1, 세로로 합친다
+        # x = np.concatenate((scaled_price, scaled_volume, scaled_OBV), axis=1)  # axis=1, 세로로 합친다
+        x = scaled_price
         y = fluc_close
+
         # print(x.shape, y.shape)  # (258, 6) (258, 1)
         # quit()
 
@@ -167,7 +170,7 @@ def made_x(file, input_data_length, model_num, check_span, Range_fluc, get_fig):
             dataX.append(group_x)  # dataX 리스트에 추가
             dataY.append(group_y)  # dataY 리스트에 추가
 
-        sliced_ohlcv = ohlcv_data[input_data_length:, :6]
+        sliced_ohlcv = ohlcv_data[input_data_length:, :4]
 
         # ----------- FLUC_CLOSE TO SPAN, 넘겨주기 위해서 INDEX 를 담아주어야 한다. -----------#
         if get_fig == 1:
@@ -182,13 +185,13 @@ def made_x(file, input_data_length, model_num, check_span, Range_fluc, get_fig):
             # ----------- 인덱스 초기화 됨 -----------#
 
             # ----------- Chart 그리기 -----------#
-            plt.plot(min_max_scaler(ohlcv_data[:, [1]]), 'r', label='close')
-            plt.plot(scaled_OBV, 'b', label='OBV')
+            plt.plot(min_max_scaler(ohlcv_data[:, [1]]), 'gold', label='close')
+            # plt.plot(scaled_OBV, 'b', label='OBV')
             plt.legend(loc='upper right')
 
             # Spanning
             for i in range(len(spanlist)):
-                plt.axvspan(spanlist[i][0], spanlist[i][1], facecolor='blue', alpha=0.3)
+                plt.axvspan(spanlist[i][0], spanlist[i][1], facecolor='c', alpha=0.7)
 
             Date = file.split()[0]
             Coin = file.split()[1].split('.')[0]
