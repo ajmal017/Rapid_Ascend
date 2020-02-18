@@ -5,19 +5,20 @@ from fake_useragent import UserAgent
 import time
 pd.set_option('display.max_rows', 1500)
 
-
-# df_sample = pybithumb.get_ohlcv('BTC', 'KRW', 'minute1')    #.loc['2020-02-16 22:57:00', :]    # 2020-02-16 22:57:00
-df_sample = pd.read_excel('')
-index = df_sample.index.values
-
+print(pd.read_excel('이미지분석 A반 출석현황.xlsx'))
+# for coin in pybithumb.get_tickers():
+#     df_sample = pybithumb.get_ohlcv(coin, 'KRW', 'minute1')    #.loc['2020-02-16 22:57:00', :]    # 2020-02-16 22:57:00
+#     # df_sample = pd.read_excel('')
+#     index = df_sample.index.values
+#     print(index[-1])
 # print(index[:20])
 #   finding index number    #
-for i in range(len(index)):
-
-    if index[i] == np.datetime64('2020-02-15T23:19:00.000000000'):
-        print(i)
-
-        break
+# for i in range(len(index)):
+#
+#     if index[i] == np.datetime64('2020-02-15T23:19:00.000000000'):
+#         print(i)
+#
+#         break
 
 # start_time = time.time()
 # pybithumb.get_ohlcv('BTC', 'KRW', 'minute1')

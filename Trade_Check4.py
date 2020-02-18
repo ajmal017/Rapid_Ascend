@@ -39,7 +39,7 @@ if __name__ == '__main__':
     #
     # series = series[:20]
     # TopCoin = list(series.index)
-    TopCoin = list(map(str.upper, ['BHP']))
+    TopCoin = list(map(str.upper, ['true']))
 
     for Coin in TopCoin:
 
@@ -49,11 +49,11 @@ if __name__ == '__main__':
         # model_num = input('Press model number : ')
         model_num = 23
         model_num2 = 34
-        crop_size_low = 500
-        crop_size_high = 300
+        crop_size_low = 300
+        crop_size_high = 100
         crop_size_sudden_death = 100
         limit_line_low = 0.9
-        limit_line_high = 0.65
+        limit_line_high = 0.9
         limit_line_sudden_death = 0.45
         get_fig = 1
 
@@ -66,8 +66,7 @@ if __name__ == '__main__':
             pass
 
         #       LOAD MODEL      #
-        # model = load_model('./model/rapid_ascending %s_%s - 4.39.hdf5' % (input_data_length, model_num))
-        model = load_model('./model/rapid_ascending %s_%s.hdf5' % (input_data_length, model_num))
+        model = load_model('./model/rapid_ascending %s_%s - 4.39.hdf5' % (input_data_length, model_num))
         model2 = load_model('./model/rapid_ascending %s_%s.hdf5' % (input_data_length, model_num2))
 
         try:

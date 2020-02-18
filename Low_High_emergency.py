@@ -29,7 +29,7 @@ crop_size_sudden_death = 100    # 작을수록 손절모드에 적합하다 : LI
 limit_line_low = 0.97   # 최저점 선정 모드
 limit_line_high = 0.65   # 익절 모드
 limit_line_sudden_death = 0.45  # 손절 모드
-check_span = 50
+check_span = 1
 
 #       Trade Info      #
 #                                           Check The Money                                              #
@@ -44,7 +44,7 @@ model = load_model('./model/rapid_ascending %s_%s - 4.39.hdf5' % (input_data_len
 find_new_low = 1
 check_new_low = 0
 limit_line = limit_line_high
-Coin = 'ipx'.upper()
+Coin = 'enj'.upper()
 
 #           매도 대기           #
 while True:

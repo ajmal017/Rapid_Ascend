@@ -225,6 +225,7 @@ def low_high_origin(Coin, input_data_length, ip_limit=None, trade_limit=None, cr
     ohlcv_excel['OBV'] = obv
 
     closeprice = ohlcv_excel['close'].iloc[-1]
+    datetime_list = ohlcv_excel.index.values
 
     # ----------- dataX, dataY 추출하기 -----------#
     #   OBV :
@@ -271,7 +272,7 @@ def low_high_origin(Coin, input_data_length, ip_limit=None, trade_limit=None, cr
 
         X_test = X_test.astype('float32').reshape(-1, row, col, 1)
 
-        return X_test, closeprice, min_max_scaler(ohlcv_data[input_data_length:, [1]]), _
+        return X_test, closeprice, min_max_scaler(ohlcv_data[input_data_length:, [1]]), datetime_list
 
 
 def made_x(file, input_data_length, model_num, check_span, get_fig, crop_size=500, sudden_death=0):
@@ -582,7 +583,7 @@ def made_x_origin(file, input_data_length, model_num, check_span, get_fig, crop_
     ohlcv_excel = pd.read_excel(dir + file, index_col=0)
 
     # ohlcv_excel['CMO'] = cmo(ohlcv_excel)
-    # ohlcv_excel['OBV'] = obv(ohlcv_excel)
+    ohlcv_excel['OBV'] = obv(ohlcv_excel)
     # ohlcv_excel['RSI'] = rsi(ohlcv_excel)
 
     # print(ohlcv_excel)
@@ -618,8 +619,8 @@ def made_x_origin(file, input_data_length, model_num, check_span, get_fig, crop_
 
     # NaN 제외하고 데이터 자르기 (데이터가 PIXEL 로 들어간다고 생각하면 된다)
     #   OBV : -CHECK_SPAN
-    ohlcv_data = ohlcv_excel.values[: -check_span].astype(np.float)
-    # ohlcv_data = ohlcv_excel.values[1: -check_span].astype(np.float)
+    # ohlcv_data = ohlcv_excel.values[: -check_span].astype(np.float)
+    ohlcv_data = ohlcv_excel.values[1: -check_span].astype(np.float)
     # ohlcv_data = ohlcv_excel.values[sum(ohlcv_excel.CMO.isna()): -check_span].astype(np.float)
     # ohlcv_data = ohlcv_excel.values[sum(ohlcv_excel.RSI.isna()): -check_span].astype(np.float)
 
@@ -634,22 +635,22 @@ def made_x_origin(file, input_data_length, model_num, check_span, get_fig, crop_
         #          데이터 전처리         #
         #   Fixed X_data    #
         price = ohlcv_data[:, :4]
-        # volume = ohlcv_data[:, [4]]
+        volume = ohlcv_data[:, [4]]
         # CMO = ohlcv_data[:, [-2]]
-        # OBV = ohlcv_data[:, [-2]]
+        OBV = ohlcv_data[:, [-2]]
         # RSI = ohlcv_data[:, [-2]]
 
         #   Flexible Y_data    #
         trade_state = ohlcv_data[:, [-1]]
 
         scaled_price = min_max_scaler(price)
-        # scaled_volume = min_max_scaler(volume)
+        scaled_volume = min_max_scaler(volume)
         # scaled_CMO = min_max_scaler(CMO)
-        # scaled_OBV = min_max_scaler(OBV)
+        scaled_OBV = min_max_scaler(OBV)
         # scaled_RSI = min_max_scaler(RSI)
 
-        # x = np.concatenate((scaled_price, scaled_volume, scaled_OBV), axis=1)  # axis=1, 세로로 합친다
-        x = scaled_price
+        x = np.concatenate((scaled_price, scaled_volume, scaled_OBV), axis=1)  # axis=1, 세로로 합친다
+        # x = scaled_price
         y = trade_state
         # print(x.shape, y_low.shape)  # (258, 6) (258, 1)
         # quit()
@@ -674,7 +675,7 @@ def made_x_origin(file, input_data_length, model_num, check_span, get_fig, crop_
         # print(X_test.shape)
 
         #       Exstracting fiexd X_data       #
-        sliced_ohlcv = ohlcv_data[crop_size:, :4]
+        sliced_ohlcv = ohlcv_data[:, :4]
 
         #                      Get Figure                     #
         if get_fig == 1:
