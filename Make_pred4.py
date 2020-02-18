@@ -3,7 +3,7 @@ import pandas as pd
 from keras.models import load_model
 from matplotlib import pyplot as plt
 import os
-from Make_X2 import made_x, made_x_origin, made_x_ma
+from Make_X2 import made_x, made_x_origin
 from keras.utils import np_utils
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -16,9 +16,7 @@ if __name__ == '__main__':
 
     #           PARAMS           #
     input_data_length = 54
-    # model_num = input('Press model num : ')
-    model_num = 21
-    model_num2 = 33
+    model_num = '23 - 400000'
     crop_size = 500
     crop_size2 = 300
     limit_line = 0.9
@@ -35,7 +33,7 @@ if __name__ == '__main__':
         pass
 
     try:
-        os.mkdir('./Figure_pred/%s_%s/' % (input_data_length, model_num2))
+        os.mkdir('./Figure_pred/%s_%s/' % (input_data_length, model_num))
     except Exception as e:
         pass
 
@@ -43,9 +41,8 @@ if __name__ == '__main__':
 
     #       LOAD MODEL      #
     model = load_model('./model/rapid_ascending %s_%s.hdf5' % (input_data_length, model_num))
-    model2 = load_model('./model/rapid_ascending %s_%s.hdf5' % (input_data_length, model_num2))
 
-    ohlcv_list = ['2019-10-16 hyc ohlcv.xlsx']
+    # ohlcv_list = ['2019-10-05 CMT ohlcv.xlsx']
 
     for file in ohlcv_list:
 
@@ -135,7 +132,7 @@ if __name__ == '__main__':
                 plt.subplot(211)
                 # plt.subplot(313)
                 plt.plot(sliced_ohlc[:, [1]], 'gold', label='close')
-                # plt.plot(sliced_ohlc[:, [4]], 'b', label='MA')
+                plt.plot(sliced_ohlc[:, [-1]], 'b', label='MA')
                 plt.legend(loc='upper right')
                 for i in range(len(spanlist_low)):
                     plt.axvspan(spanlist_low[i][0], spanlist_low[i][1], facecolor='c', alpha=0.7)
@@ -143,7 +140,7 @@ if __name__ == '__main__':
                 plt.subplot(212)
                 # plt.subplot(313)
                 plt.plot(sliced_ohlc2[:, [1]], 'gold', label='close')
-                # plt.plot(sliced_ohlc[:, [4]], 'b', label='MA')
+                plt.plot(sliced_ohlc2[:, [-1]], 'b', label='MA')
                 plt.legend(loc='upper right')
                 for i in range(len(spanlist_high)):
                     plt.axvspan(spanlist_high[i][0], spanlist_high[i][1], facecolor='m', alpha=0.7)

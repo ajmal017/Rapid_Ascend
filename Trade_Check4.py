@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from keras.models import load_model
 from matplotlib import pyplot as plt
-from Make_X2 import low_high, low_high_origin, low_high_ma
+from Make_X2 import low_high, low_high_origin
 from datetime import datetime
 import pybithumb
 import time
