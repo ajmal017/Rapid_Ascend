@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from keras.models import load_model
 import os
-from Make_X2 import low_high
+from Make_X2 import low_high, low_high_origin
 import warnings
 warnings.filterwarnings("ignore")
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -22,12 +22,12 @@ with open("Keys.txt") as f:
 
 #       Params      #
 input_data_length = 54
-model_num = 23
-crop_size_low = 500     # 적당히 크면 안정적
+model_num = '23 - 400000'
+crop_size_low = 400     # 적당히 크면 안정적
 crop_size_high = 300    # 작을수록 손절모드에 적합하다 : LIMIT_LINE 과 조합해서 사용해야한다.
 crop_size_sudden_death = 100    # 작을수록 손절모드에 적합하다 : LIMIT_LINE 과 조합해서 사용해야한다.
 limit_line_low = 0.97   # 최저점 선정 모드
-limit_line_high = 0.65   # 익절 모드
+limit_line_high = 0.8   # 익절 모드
 limit_line_sudden_death = 0.45  # 손절 모드
 check_span = 50
 
@@ -38,7 +38,7 @@ buy_wait = 10  # minute
 Profits = 1.0
 
 #       Model Fitting       #
-model = load_model('./model/rapid_ascending %s_%s - 4.39.hdf5' % (input_data_length, model_num))
+model = load_model('./model/rapid_ascending %s_%s.hdf5' % (input_data_length, model_num))
 
 while True:
 
@@ -68,6 +68,7 @@ while True:
 
         series = series[:CoinVolume]
         TopCoin = list(series.index)
+        # TopCoin = list(map(str.upper, ['dvp']))
 
         for Coin in TopCoin:
             try:
@@ -84,9 +85,9 @@ while True:
                 #   closeprice 가 MinMaxScaler() 로 0.3 보다 크면 predict 하지 않는다.
                 #   ohlcv_data_length 가 100 이하이면 predict 하지 않는다.
                 if (datetime.now().minute % 5) in [0, 1, 2]:
-                    X_test, buy_price, _, start_datetime_list = low_high(Coin, input_data_length, crop_size=crop_size_low, sudden_death=0.)  # TopCoin 으로 제약조건을 걸어서 trade_limit==0
+                    X_test, buy_price, _, start_datetime_list = low_high_origin(Coin, input_data_length, crop_size=crop_size_low, sudden_death=0.)  # TopCoin 으로 제약조건을 걸어서 trade_limit==0
                 else:
-                    X_test, buy_price, _, start_datetime_list = low_high(Coin, input_data_length, 'proxy', crop_size=crop_size_low, sudden_death=0.)
+                    X_test, buy_price, _, start_datetime_list = low_high_origin(Coin, input_data_length, 'proxy', crop_size=crop_size_low, sudden_death=0.)
 
                 if X_test is not None:
                     Y_pred_ = model.predict(X_test, verbose=1)
@@ -229,7 +230,7 @@ while True:
                     while True:
                         try:
                             if find_new_low == 1:
-                                X_test_high, _, _, end_datetime_list = low_high(Coin, input_data_length,
+                                X_test_high, _, _, end_datetime_list = low_high_origin(Coin, input_data_length,
                                                                                 crop_size=crop_size_high,
                                                                                 sudden_death=0.)
 
@@ -239,13 +240,13 @@ while True:
 
                                         #       len(end_datetime_list) - 시작 인덱스 > check_span 이면 저점 갱신 확인       #
                                         if len(end_datetime_list) - i > check_span:
-                                            X_test_low, _, _, _ = low_high(Coin, input_data_length,
+                                            X_test_low, _, _, _ = low_high_origin(Coin, input_data_length,
                                                                                                  crop_size=crop_size_low,
                                                                                                  sudden_death=0.)
                                             check_new_low = 1
                                         break
                             else:
-                                X_test_high, _, _, _ = low_high(Coin, input_data_length,
+                                X_test_high, _, _, _ = low_high_origin(Coin, input_data_length,
                                                                                 crop_size=crop_size_sudden_death,
                                                                                 sudden_death=0.)
                             break
@@ -261,7 +262,7 @@ while True:
 
                         if Y_pred_low_[-1][1] > max_value_low[1] * limit_line_low:
                             limit_line = limit_line_sudden_death
-                            X_test_high, _, _, _ = low_high(Coin, input_data_length,
+                            X_test_high, _, _, _ = low_high_origin(Coin, input_data_length,
                                                                             crop_size=crop_size_sudden_death, sudden_death=0.)
                             find_new_low = 0
                             check_new_low = 0

@@ -5,8 +5,11 @@ from fake_useragent import UserAgent
 import time
 pd.set_option('display.max_rows', 1500)
 
-print(pd.read_excel('이미지분석 A반 출석현황.xlsx'))
-# for coin in pybithumb.get_tickers():
+# print(('d', 'c' in list('d1')))
+# for coin in pybithumb.get_ticker
+string = 'dfs.xlsx'
+print(string.endswith('.xlsx'))
+# s():
 #     df_sample = pybithumb.get_ohlcv(coin, 'KRW', 'minute1')    #.loc['2020-02-16 22:57:00', :]    # 2020-02-16 22:57:00
 #     # df_sample = pd.read_excel('')
 #     index = df_sample.index.values
