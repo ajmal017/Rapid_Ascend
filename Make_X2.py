@@ -336,7 +336,7 @@ def made_x(file, input_data_length, model_num, check_span, get_fig, crop_size=50
         return X_test, dataY, sliced_ohlcv
 
 
-def made_x_origin(file, input_data_length, model_num, check_span, get_fig, crop_size=None, sudden_death=0):
+def made_x_origin(file, input_data_length, model_num, check_span, get_fig, crop_size=0, sudden_death=0):
 
     if type(file) is str:
         ohlcv_excel = pd.read_excel(dir + file, index_col=0)
@@ -392,7 +392,7 @@ def made_x_origin(file, input_data_length, model_num, check_span, get_fig, crop_
     else:
         ohlcv_data = file
 
-    if crop_size is not None:
+    if crop_size != 0:
         ohlcv_data = ohlcv_data[crop_size:]
 
     # 결측 데이터 제외

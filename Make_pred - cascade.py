@@ -17,7 +17,7 @@ if __name__ == '__main__':
     #           PARAMS           #
     input_data_length = 54
     model_num = '23 - 400000'
-    crop_size = None     # 이전 저점까지 slicing
+    crop_size = 0     # 이전 저점까지 slicing
     crop_size2 = crop_size
 
     limit_line = 1.  # 다음 저점을 고르기 위한 limit_line
@@ -64,6 +64,8 @@ if __name__ == '__main__':
         #           데이터가 끝날때까지 반복          #
         while True:
             # try:
+            print(type(file))
+
             X_test, _, sliced_ohlc = made_x_origin(file, input_data_length, model_num, check_span, 0, crop_size=crop_size, sudden_death=sudden_death)
             X_test2, _, sliced_ohlc2 = made_x_origin(file, input_data_length, model_num, check_span, 0, crop_size=crop_size2, sudden_death=sudden_death2)
                 # X_test, _ = low_high(Coin, input_data_length, sudden_death=1.)
@@ -109,48 +111,52 @@ if __name__ == '__main__':
 
                 #   Y_pred 에 1 이 존재하면, Plot Comparing
                 #   저점을 누적해서 찍어준다.
-                if get_fig == 1:
+                #                   찍을때 인덱스 번호가 달라진다.               #
 
-                    for m in range(len(Y_pred)):
-                        if (Y_pred[m] > 0.5) and (Y_pred[m] < 1.5):
-                            if m + 1 < len(Y_pred):
-                                spanlist_low.append((m, m + 1))
-                            else:
-                                spanlist_low.append((m - 1, m))
+                for m in np.arange(len(Y_pred)):
+                    if (Y_pred[m] > 0.5) and (Y_pred[m] < 1.5):
+                        m += crop_size
+                        if m + 1 < len(Y_pred):
+                            spanlist_low.append((m, m + 1))
+                        else:
+                            spanlist_low.append((m - 1, m))
 
-                    for m in range(len(Y_pred2)):
-                        if (Y_pred2[m] > 1.5) and (Y_pred2[m] < 2.5):
-                            if m + 1 < len(Y_pred2):
-                                spanlist_high.append((m, m + 1))
-                            else:
-                                spanlist_high.append((m - 1, m))
+                for m in np.arange(len(Y_pred2)):
+                    if (Y_pred2[m] > 1.5) and (Y_pred2[m] < 2.5):
+                        m += crop_size
+                        if m + 1 < len(Y_pred2):
+                            spanlist_high.append((m, m + 1))
+                        else:
+                            spanlist_high.append((m - 1, m))
 
-                    crop_size = spanlist_low[-1][0]
-                    crop_size2 = spanlist_low[-1][0]
+                crop_size = spanlist_low[-1][0]
+                crop_size2 = spanlist_low[-1][0]
+
+                if type(file) is str:
+                    result_ohlcv = sliced_ohlc
 
                 file = sliced_ohlc
-                result_ohlcv = sliced_ohlc
 
-    print(result_ohlcv)
+    if get_fig == 1:
 
-    plt.subplot(211)
-    # plt.subplot(313)
-    plt.plot(result_ohlcv[:, [1]], 'gold', label='close')
-    plt.plot(result_ohlcv[:, [-1]], 'b', label='MA')
-    plt.legend(loc='upper right')
-    for i in range(len(spanlist_low)):
-        plt.axvspan(spanlist_low[i][0], spanlist_low[i][1], facecolor='c', alpha=0.7)
+        plt.subplot(211)
+        # plt.subplot(313)
+        plt.plot(result_ohlcv[:, [1]], 'gold', label='close')
+        plt.plot(result_ohlcv[:, [-1]], 'b', label='MA')
+        plt.legend(loc='upper right')
+        for i in range(len(spanlist_low)):
+            plt.axvspan(spanlist_low[i][0], spanlist_low[i][1], facecolor='c', alpha=0.7)
 
-    plt.subplot(212)
-    # plt.subplot(313)
-    plt.plot(result_ohlcv[:, [1]], 'gold', label='close')
-    plt.plot(result_ohlcv[:, [-1]], 'b', label='MA')
-    plt.legend(loc='upper right')
-    for i in range(len(spanlist_high)):
-        plt.axvspan(spanlist_high[i][0], spanlist_high[i][1], facecolor='m', alpha=0.7)
+        plt.subplot(212)
+        # plt.subplot(313)
+        plt.plot(result_ohlcv[:, [1]], 'gold', label='close')
+        plt.plot(result_ohlcv[:, [-1]], 'b', label='MA')
+        plt.legend(loc='upper right')
+        for i in range(len(spanlist_high)):
+            plt.axvspan(spanlist_high[i][0], spanlist_high[i][1], facecolor='m', alpha=0.7)
 
-    plt.savefig('./Figure_pred/%s_%s/%s %s.png' % (input_data_length, model_num, Date, Coin), dpi=500)
-    plt.close()
+        plt.savefig('./Figure_pred/%s_%s/%s %s.png' % (input_data_length, model_num, Date, Coin), dpi=500)
+        plt.close()
 
 
 

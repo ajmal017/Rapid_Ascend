@@ -7,8 +7,10 @@ pd.set_option('display.max_rows', 1500)
 
 # print(('d', 'c' in list('d1')))
 # for coin in pybithumb.get_ticker
-string = 'dfs.xlsx'
-print(string.endswith('.xlsx'))
+# string = 'dfs.xlsx'
+# print(string.endswith('.xlsx'))
+print(np.arange(10) + 1)
+
 # s():
 #     df_sample = pybithumb.get_ohlcv(coin, 'KRW', 'minute1')    #.loc['2020-02-16 22:57:00', :]    # 2020-02-16 22:57:00
 #     # df_sample = pd.read_excel('')
