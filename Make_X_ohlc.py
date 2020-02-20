@@ -505,19 +505,18 @@ if __name__ == '__main__':
     except Exception as e:
         pass
     check_span = 30
-    get_fig = 0
+    get_fig = 1
 
     Made_X = []
     Made_Y = []
-    Made_Y_low = []
-    Made_Y_high = []
+
+    ohlcv_list = ['2020-01-10 ETH ohlcv.xlsx']
 
     for file in ohlcv_list:
 
         if int(file.split()[0].split('-')[1]) == 1:
             continue
 
-        # file = '2019-10-27 LAMB ohlcv.xlsx'
 
         # result = made_x(file, input_data_length, model_num, check_span, get_fig)
         result = low_high('dvp'.upper(), input_data_length)
@@ -528,17 +527,14 @@ if __name__ == '__main__':
         if result is not None:
 
             Made_X += result[0]
-            Made_Y_low += result[1]
-            Made_Y_high += result[2]
+            Made_Y += result[1]
 
             # 누적 데이터량 표시
             print(file, len(Made_X))
 
     # SAVING X, Y
     X = np.array(Made_X)
-    Y_low = np.array(Made_Y_low)
-    Y_high = np.array(Made_Y_high)
-
+    Y = np.array(Made_Y)
     # np.save('./Made_X/Made_X %s_%s' % (input_data_length, model_num), X)
     # np.save('./Made_X_low/Made_Y %s_%s' % (input_data_length, model_num), Y_low)
     # np.save('./Made_X_high/Made_Y %s_%s' % (input_data_length, model_num), Y_high)

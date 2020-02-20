@@ -8,6 +8,7 @@ import pandas as pd
 from keras.models import load_model
 from matplotlib import pyplot as plt
 from Make_X_ohlc import low_high, low_high_origin
+from Make_X_lowhigh_point import low_high_origin
 from datetime import datetime
 import pybithumb
 import time
@@ -17,29 +18,29 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 if __name__ == '__main__':
 
     #           Making TopCoin List         #
-    # Coinlist = pybithumb.get_tickers()
-    # Fluclist = []
-    # while True:
-    #     try:
-    #         for Coin in Coinlist:
-    #             tickerinfo = pybithumb.PublicApi.ticker(Coin)
-    #             data = tickerinfo['data']
-    #             fluctate = data['fluctate_rate_24H']
-    #             Fluclist.append(fluctate)
-    #             time.sleep(1 / 90)
-    #         break
-    #
-    #     except Exception as e:
-    #         Fluclist.append(None)
-    #         print('Error in making Topcoin :', e)
-    #
-    # Fluclist = list(map(float, Fluclist))
-    # series = pd.Series(Fluclist, Coinlist)
-    # series = series.sort_values(ascending=False)
-    #
-    # series = series[:20]
-    # TopCoin = list(series.index)
-    TopCoin = list(map(str.upper, ['knc']))
+    Coinlist = pybithumb.get_tickers()
+    Fluclist = []
+    while True:
+        try:
+            for Coin in Coinlist:
+                tickerinfo = pybithumb.PublicApi.ticker(Coin)
+                data = tickerinfo['data']
+                fluctate = data['fluctate_rate_24H']
+                Fluclist.append(fluctate)
+                time.sleep(1 / 90)
+            break
+
+        except Exception as e:
+            Fluclist.append(None)
+            print('Error in making Topcoin :', e)
+
+    Fluclist = list(map(float, Fluclist))
+    series = pd.Series(Fluclist, Coinlist)
+    series = series.sort_values(ascending=False)
+
+    series = series[:20]
+    TopCoin = list(series.index)
+    # TopCoin = list(map(str.upper, ['knc']))
 
     for Coin in TopCoin:
 
@@ -47,7 +48,7 @@ if __name__ == '__main__':
         input_data_length = 54
         # input_data_length = int(input("Input Data Length : "))
         # model_num = input('Press model number : ')
-        model_num = '23 - 400000'
+        model_num = '23_400000'
         crop_size_low = 200
         crop_size_high = 100
         crop_size_sudden_death = 100
@@ -102,17 +103,11 @@ if __name__ == '__main__':
             for i in range(len(Y_pred_)):
                 if Y_pred_[i][1] > max_value[1] * limit_line_low:
                     Y_pred[i] = 1
-                elif Y_pred_[i][2] > max_value[2] * limit_line_low:
-                    Y_pred[i] = 2
             for i in range(len(Y_pred2_)):
-                if Y_pred2_[i][1] > max_value2[1] * limit_line_high:
-                    Y_pred2[i] = 1
-                elif Y_pred2_[i][2] > max_value2[2] * limit_line_high:
+                if Y_pred2_[i][2] > max_value2[2] * limit_line_high:
                     Y_pred2[i] = 2
             for i in range(len(Y_pred3_)):
-                if Y_pred3_[i][1] > max_value3[1] * limit_line_sudden_death:
-                    Y_pred3[i] = 1
-                elif Y_pred3_[i][2] > max_value3[2] * limit_line_sudden_death:
+                if Y_pred3_[i][2] > max_value3[2] * limit_line_sudden_death:
                     Y_pred3[i] = 2
 
             if get_fig == 1:

@@ -136,6 +136,37 @@ def low_high_origin(Coin, input_data_length, ip_limit=None, trade_limit=None, cr
             obv[m] = obv[m - 1] - ohlcv_excel['volume'].iloc[m]
     ohlcv_excel['OBV'] = obv
 
+    trade_state = [np.NaN] * len(ohlcv_excel)
+    for i in range(check_span, len(ohlcv_excel) - check_span):
+        #   저점
+        if ohlcv_excel['close'][i - check_span:i].min() >= ohlcv_excel['close'][i]:
+            if ohlcv_excel['close'][i + 1:i + 1 + check_span].min() >= ohlcv_excel['close'][i]:
+                if ohlcv_excel['close'][i - check_span:i + 1 + check_span].value_counts().sort_index().iloc[0] <= 3:
+                    if 1 not in trade_state[i - check_span:i]:
+                        trade_state[i] = 1
+                    else:
+                        trade_state[i] = 0
+                else:
+                    trade_state[i] = 0
+            else:
+                trade_state[i] = 0
+        #   고점
+        elif ohlcv_excel['close'][i - check_span:i].max() <= ohlcv_excel['close'][i]:
+            if ohlcv_excel['close'][i + 1:i + 1 + check_span].max() <= ohlcv_excel['close'][i]:
+                if ohlcv_excel['close'][i - check_span:i + 1 + check_span].value_counts().sort_index().iloc[-1] <= 3:
+                    if 2 not in trade_state[i - check_span:i]:
+                        trade_state[i] = 2
+                    else:
+                        trade_state[i] = 0
+                else:
+                    trade_state[i] = 0
+            else:
+                trade_state[i] = 0
+
+        #   거래 안함
+        else:
+            trade_state[i] = 0
+
     closeprice = ohlcv_excel['close'].iloc[-1]
     datetime_list = ohlcv_excel.index.values
 
@@ -150,7 +181,7 @@ def low_high_origin(Coin, input_data_length, ip_limit=None, trade_limit=None, cr
         #   Fixed X_data    #
         price = ohlcv_data[:, :4]
         volume = ohlcv_data[:, [4]]
-        OBV = ohlcv_data[:, [-1]]
+        OBV = ohlcv_data[:, [-2]]
 
         scaled_price = min_max_scaler(price)
         scaled_volume = min_max_scaler(volume)
@@ -365,7 +396,10 @@ def made_x_origin(file, input_data_length, model_num, check_span, get_fig, crop_
             if ohlcv_excel['close'][i - check_span:i].min() >= ohlcv_excel['close'][i]:
                 if ohlcv_excel['close'][i + 1:i + 1 + check_span].min() >= ohlcv_excel['close'][i]:
                     if ohlcv_excel['close'][i - check_span:i + 1 + check_span].value_counts().sort_index().iloc[0] <= 3:
-                        trade_state[i] = 1
+                        if 1 not in trade_state[i - check_span:i]:
+                            trade_state[i] = 1
+                        else:
+                            trade_state[i] = 0
                     else:
                         trade_state[i] = 0
                 else:
@@ -374,7 +408,10 @@ def made_x_origin(file, input_data_length, model_num, check_span, get_fig, crop_
             elif ohlcv_excel['close'][i - check_span:i].max() <= ohlcv_excel['close'][i]:
                 if ohlcv_excel['close'][i + 1:i + 1 + check_span].max() <= ohlcv_excel['close'][i]:
                     if ohlcv_excel['close'][i - check_span:i + 1 + check_span].value_counts().sort_index().iloc[-1] <= 3:
-                        trade_state[i] = 2
+                        if 2 not in trade_state[i - check_span:i]:
+                            trade_state[i] = 2
+                        else:
+                            trade_state[i] = 0
                     else:
                         trade_state[i] = 0
                 else:
@@ -385,6 +422,7 @@ def made_x_origin(file, input_data_length, model_num, check_span, get_fig, crop_
                 trade_state[i] = 0
 
         ohlcv_excel['trade_state'] = trade_state
+        # print(trade_state)
 
         # ----------- dataX, dataY 추출하기 -----------#
         # print(ohlcv_excel.info())
@@ -526,12 +564,12 @@ if __name__ == '__main__':
     Made_X = []
     Made_Y = []
 
+    ohlcv_list = ['2020-01-10 ETH ohlcv.xlsx']
+
     for file in ohlcv_list:
 
         if int(file.split()[0].split('-')[1]) != 1:
             continue
-
-        # file = '2019-10-27 LAMB ohlcv.xlsx'
 
         result = made_x_origin(file, input_data_length, model_num, check_span, get_fig)
         # result = low_high('dvp'.upper(), input_data_length)
