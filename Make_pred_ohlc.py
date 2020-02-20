@@ -3,7 +3,7 @@ import pandas as pd
 from keras.models import load_model
 from matplotlib import pyplot as plt
 import os
-from Make_X2 import made_x, made_x_origin
+from Make_X_ohlc import made_x, made_x_origin
 from keras.utils import np_utils
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -16,7 +16,7 @@ if __name__ == '__main__':
 
     #           PARAMS           #
     input_data_length = 54
-    model_num = '23 - 400000'
+    model_num = '23_400000'
     crop_size = 0     # 이전 저점까지 slicing
     crop_size2 = crop_size
     limit_line = 0.9    # 다음 저점을 고르기 위한 limit_line

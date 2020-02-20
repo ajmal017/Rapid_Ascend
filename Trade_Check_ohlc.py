@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from keras.models import load_model
 from matplotlib import pyplot as plt
-from Make_X2 import low_high, low_high_origin
+from Make_X_ohlc import low_high, low_high_origin
 from datetime import datetime
 import pybithumb
 import time
@@ -39,7 +39,7 @@ if __name__ == '__main__':
     #
     # series = series[:20]
     # TopCoin = list(series.index)
-    TopCoin = list(map(str.upper, ['pcm']))
+    TopCoin = list(map(str.upper, ['knc']))
 
     for Coin in TopCoin:
 
@@ -48,11 +48,11 @@ if __name__ == '__main__':
         # input_data_length = int(input("Input Data Length : "))
         # model_num = input('Press model number : ')
         model_num = '23 - 400000'
-        crop_size_low = 400
+        crop_size_low = 200
         crop_size_high = 100
         crop_size_sudden_death = 100
         limit_line_low = 0.97
-        limit_line_high = 0.8
+        limit_line_high = 0.9
         limit_line_sudden_death = 0.45
         get_fig = 1
 
@@ -68,9 +68,9 @@ if __name__ == '__main__':
         model = load_model('./model/rapid_ascending %s_%s.hdf5' % (input_data_length, model_num))
 
         try:
-            X_test, _, closeprice, _ = low_high_origin(Coin, input_data_length, crop_size=crop_size_low, sudden_death=0.)
-            X_test2, _, closeprice2, _ = low_high_origin(Coin, input_data_length, crop_size=crop_size_high, sudden_death=0.)
-            X_test3, _, closeprice3, _ = low_high_origin(Coin, input_data_length, crop_size=crop_size_sudden_death, sudden_death=0.)
+            X_test, _, closeprice, _ = low_high(Coin, input_data_length, crop_size=crop_size_low, sudden_death=0.)
+            X_test2, _, closeprice2, _ = low_high(Coin, input_data_length, crop_size=crop_size_high, sudden_death=0.)
+            X_test3, _, closeprice3, _ = low_high(Coin, input_data_length, crop_size=crop_size_sudden_death, sudden_death=0.)
             # X_test, _ = low_high(Coin, input_data_length, sudden_death=1.)
             # closeprice = np.roll(np.array(list(map(lambda x: x[-1][[1]][0], X_test))), -1)
 

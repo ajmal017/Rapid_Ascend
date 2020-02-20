@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from keras.models import load_model
 from matplotlib import pyplot as plt
-from Make_X import low_high
+from Make_X_fluc_close import low_high
 import pybithumb
 import time
 from datetime import datetime
