@@ -341,9 +341,9 @@ def made_x_origin(file, input_data_length, model_num, check_span, get_fig, crop_
     if type(file) is str:
         ohlcv_excel = pd.read_excel(dir + file, index_col=0)
 
-        ohlcv_excel['MA60'] = ohlcv_excel['close'].rolling(60).mean()
+        # ohlcv_excel['MA60'] = ohlcv_excel['close'].rolling(60).mean()
         # ohlcv_excel['CMO'] = cmo(ohlcv_excel)
-        ohlcv_excel['OBV'] = obv(ohlcv_excel)
+        # ohlcv_excel['OBV'] = obv(ohlcv_excel)
         # ohlcv_excel['RSI'] = rsi(ohlcv_excel)
 
         # print(ohlcv_excel)
@@ -379,8 +379,8 @@ def made_x_origin(file, input_data_length, model_num, check_span, get_fig, crop_
 
         # NaN 제외하고 데이터 자르기 (데이터가 PIXEL 로 들어간다고 생각하면 된다)
         #   OBV : -CHECK_SPAN
-        # ohlcv_data = ohlcv_excel.values[: -check_span].astype(np.float)
-        ohlcv_data = ohlcv_excel.values[ohlcv_excel['MA60'].isnull().sum():-check_span - 150].astype(np.float)
+        ohlcv_data = ohlcv_excel.values[: -check_span].astype(np.float)
+        # ohlcv_data = ohlcv_excel.values[ohlcv_excel['MA60'].isnull().sum():-check_span - 150].astype(np.float)
         # ohlcv_data = ohlcv_excel.values[1: -check_span].astype(np.float)
         # ohlcv_data = ohlcv_excel.values[sum(ohlcv_excel.CMO.isna()): -check_span].astype(np.float)
         # ohlcv_data = ohlcv_excel.values[sum(ohlcv_excel.RSI.isna()): -check_span].astype(np.float)
@@ -393,8 +393,8 @@ def made_x_origin(file, input_data_length, model_num, check_span, get_fig, crop_
         ohlcv_data = file
 
     if crop_size != 0:
-        ohlcv_data = ohlcv_data[crop_size:]
-
+        ohlcv_data = ohlcv_data[-crop_size:]
+        #
     # 결측 데이터 제외
     if len(ohlcv_data) != 0:
 

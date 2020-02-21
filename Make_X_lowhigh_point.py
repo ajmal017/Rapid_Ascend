@@ -237,7 +237,7 @@ def made_x(file, input_data_length, model_num, check_span, get_fig, crop_size=50
         #   저점
         if ohlcv_excel['close'][i - check_span:i].min() >= ohlcv_excel['close'][i]:
             if ohlcv_excel['close'][i + 1:i + 1 + check_span].min() >= ohlcv_excel['close'][i]:
-                if ohlcv_excel['close'][i - check_span:i + 1 + check_span].value_counts().sort_index().iloc[0] <= 3:
+                if 1 not in trade_state[i - check_span:i]:
                     trade_state[i] = 1
                 else:
                     trade_state[i] = 0
@@ -246,7 +246,7 @@ def made_x(file, input_data_length, model_num, check_span, get_fig, crop_size=50
         #   고점
         elif ohlcv_excel['close'][i - check_span:i].max() <= ohlcv_excel['close'][i]:
             if ohlcv_excel['close'][i + 1:i + 1 + check_span].max() <= ohlcv_excel['close'][i]:
-                if ohlcv_excel['close'][i - check_span:i + 1 + check_span].value_counts().sort_index().iloc[-1] <= 3:
+                if 2 not in trade_state[i - check_span:i]:
                     trade_state[i] = 2
                 else:
                     trade_state[i] = 0
@@ -271,10 +271,19 @@ def made_x(file, input_data_length, model_num, check_span, get_fig, crop_size=50
     # ohlcv_data = ohlcv_excel.values[sum(ohlcv_excel.CMO.isna()): -check_span].astype(np.float)
     # ohlcv_data = ohlcv_excel.values[sum(ohlcv_excel.RSI.isna()): -check_span].astype(np.float)
 
-    # print(pd.DataFrame(ohlcv_data).info())
-    # print(pd.DataFrame(ohlcv_data).to_excel('test.xlsx'))
-    # print(list(map(float, ohlcv_data[0])))
-    # quit()
+    #       이전 저점 이전 데이터 자르기        #
+    #       IDL 만큼은 기본적으로 잘라주어야한다.
+    for i in range(len(ohlcv_data)):
+        # print(ohlcv_data[:, [-1]][-i])
+        if 0 < ohlcv_data[:, [-1]][-i] < 2:
+            # print('low count')
+            if i >= input_data_length + 30:
+                break
+
+    ohlcv_data = ohlcv_data[-i:]
+
+    if i < input_data_length + 30:
+        return None, None, None
 
     # 결측 데이터 제외
     if len(ohlcv_data) != 0:
@@ -290,42 +299,30 @@ def made_x(file, input_data_length, model_num, check_span, get_fig, crop_size=50
         #   Flexible Y_data    #
         trade_state = ohlcv_data[:, [-1]]
 
-        # scaled_price = min_max_scaler(price)
+        scaled_price = min_max_scaler(price)
         # scaled_volume = min_max_scaler(volume)
         # scaled_CMO = min_max_scaler(CMO)
         # scaled_OBV = min_max_scaler(OBV)
         # scaled_RSI = min_max_scaler(RSI)
 
         # x = np.concatenate((scaled_price, scaled_volume, scaled_OBV), axis=1)  # axis=1, 세로로 합친다
-        # x = scaled_price
+        x = scaled_price
         y = trade_state
         # print(x.shape, y_low.shape)  # (258, 6) (258, 1)
         # quit()
 
         dataX = []  # input_data length 만큼 담을 dataX 그릇
         dataY = []  # Target 을 담을 그릇
-        for i in range(crop_size, len(ohlcv_data)):  # 마지막 데이터까지 다 긇어모은다.
-            group_x = ohlcv_data[i - crop_size: i]
+        for i in range(input_data_length, len(x)):
+            group_x = x[i - input_data_length:i]
             group_y = y[i]
-            scaled_price = min_max_scaler(group_x[:, :4])
-            x = scaled_price + sudden_death  # axis=1, 세로로 합친다
-            group_x = x[-input_data_length:]
 
             dataX.append(group_x)  # dataX 리스트에 추가
             dataY.append(group_y)
 
-        if len(dataX) < 100:
-            return None, None, None
-
-        X_test = np.array(dataX)
-        row = X_test.shape[1]
-        col = X_test.shape[2]
-
-        X_test = X_test.astype('float32').reshape(-1, row, col, 1)
-        # print(X_test.shape)
-
-        #       Exstracting fiexd X_data       #
-        sliced_ohlcv = ohlcv_data[crop_size:, :x.shape[1]]
+        # if len(dataX) < 100:
+        #     print('len(dataX) < 100')
+        #     return None, None, None
 
         #                      Get Figure                     #
         if get_fig == 1:
@@ -351,25 +348,41 @@ def made_x(file, input_data_length, model_num, check_span, get_fig, crop_size=50
             # ----------- 공통된 Chart 그리기 -----------#
 
             plt.subplot(211)
-            plt.plot(min_max_scaler(ohlcv_data[:, 1:2]), 'r', label='close')
+            plt.plot(min_max_scaler(ohlcv_data[:, [1]]), 'gold', label='close')
             # plt.plot(scaled_OBV, 'b', label='OBV')
             plt.legend(loc='upper right')
             for i in range(len(spanlist_low)):
-                plt.axvspan(spanlist_low[i][0], spanlist_low[i][1], facecolor='m', alpha=0.5)
+                plt.axvspan(spanlist_low[i][0], spanlist_low[i][1], facecolor='c', alpha=0.7)
 
             plt.subplot(212)
-            plt.plot(min_max_scaler(ohlcv_data[:, 1:2]), 'r', label='close')
+            plt.plot(min_max_scaler(ohlcv_data[:, [1]]), 'gold', label='close')
             # plt.plot(scaled_OBV, 'b', label='OBV')
             plt.legend(loc='upper right')
             for i in range(len(spanlist_high)):
-                plt.axvspan(spanlist_high[i][0], spanlist_high[i][1], facecolor='c', alpha=0.5)
+                plt.axvspan(spanlist_high[i][0], spanlist_high[i][1], facecolor='m', alpha=0.7)
 
+            try:
+                os.mkdir('./Figure_data/%s_%s/' % (input_data_length, model_num))
+            except Exception as e:
+                print('Error in mkdir Figure_data :', e)
+                pass
             Date = file.split()[0]
             Coin = file.split()[1].split('.')[0]
             plt.savefig('./Figure_data/%s_%s/%s %s.png' % (input_data_length, model_num, Date, Coin), dpi=500)
             plt.close()
             # plt.show()
-            # ----------- Chart 그리기 -----------#
+
+            return dataX, dataY
+
+        X_test = np.array(dataX)
+        row = X_test.shape[1]
+        col = X_test.shape[2]
+
+        X_test = X_test.astype('float32').reshape(-1, row, col, 1)
+        # print(X_test.shape)
+
+        #       Exstracting fiexd X_data       #
+        sliced_ohlcv = ohlcv_data[input_data_length:, :x.shape[1]]
 
         return X_test, dataY, sliced_ohlcv
 
@@ -395,25 +408,25 @@ def made_x_origin(file, input_data_length, model_num, check_span, get_fig, crop_
             #   저점
             if ohlcv_excel['close'][i - check_span:i].min() >= ohlcv_excel['close'][i]:
                 if ohlcv_excel['close'][i + 1:i + 1 + check_span].min() >= ohlcv_excel['close'][i]:
-                    if ohlcv_excel['close'][i - check_span:i + 1 + check_span].value_counts().sort_index().iloc[0] <= 3:
-                        if 1 not in trade_state[i - check_span:i]:
-                            trade_state[i] = 1
-                        else:
-                            trade_state[i] = 0
+                    # if ohlcv_excel['close'][i - check_span:i + 1 + check_span].value_counts().sort_index().iloc[0] <= 100:
+                    if 1 not in trade_state[i - check_span:i]:
+                        trade_state[i] = 1
                     else:
                         trade_state[i] = 0
+                    # else:
+                    #     trade_state[i] = 0
                 else:
                     trade_state[i] = 0
             #   고점
             elif ohlcv_excel['close'][i - check_span:i].max() <= ohlcv_excel['close'][i]:
                 if ohlcv_excel['close'][i + 1:i + 1 + check_span].max() <= ohlcv_excel['close'][i]:
-                    if ohlcv_excel['close'][i - check_span:i + 1 + check_span].value_counts().sort_index().iloc[-1] <= 3:
+                    # if ohlcv_excel['close'][i - check_span:i + 1 + check_span].value_counts().sort_index().iloc[-1] <= 3:
                         if 2 not in trade_state[i - check_span:i]:
                             trade_state[i] = 2
                         else:
                             trade_state[i] = 0
-                    else:
-                        trade_state[i] = 0
+                    # else:
+                    #     trade_state[i] = 0
                 else:
                     trade_state[i] = 0
 
@@ -558,23 +571,23 @@ if __name__ == '__main__':
 
     except Exception as e:
         pass
-    check_span = 30
+    check_span = 20
     get_fig = 1
 
     Made_X = []
     Made_Y = []
 
-    ohlcv_list = ['2020-01-10 ETH ohlcv.xlsx']
+    ohlcv_list = ['2019-10-07 ETHOS ohlcv.xlsx']
 
     for file in ohlcv_list:
 
-        if int(file.split()[0].split('-')[1]) != 1:
-            continue
+        # if int(file.split()[0].split('-')[1]) != 1:
+        #     continue
 
-        result = made_x_origin(file, input_data_length, model_num, check_span, get_fig)
+        result = made_x(file, input_data_length, model_num, check_span, get_fig)
         # result = low_high('dvp'.upper(), input_data_length)
         # print(type(result))
-        # quit()
+        quit()
 
         # ------------ 데이터가 있으면 dataX, dataY 병합하기 ------------#
         if result is not None:

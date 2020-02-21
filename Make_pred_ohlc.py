@@ -17,9 +17,9 @@ if __name__ == '__main__':
     #           PARAMS           #
     input_data_length = 54
     model_num = '23_400000'
-    crop_size = 0     # 이전 저점까지 slicing
-    crop_size2 = crop_size
-    limit_line = 0.9    # 다음 저점을 고르기 위한 limit_line
+    crop_size = 154     # 이전 저점까지 slicing
+    crop_size2 = 154
+    limit_line = 0.97    # 다음 저점을 고르기 위한 limit_line
     limit_line2 = 0.8
     sudden_death = 0
     sudden_death2 = 0
@@ -42,7 +42,7 @@ if __name__ == '__main__':
     #       LOAD MODEL      #
     model = load_model('./model/rapid_ascending %s_%s.hdf5' % (input_data_length, model_num))
 
-    ohlcv_list = ['2019-10-09 ZRX ohlcv.xlsx']
+    # ohlcv_list = ['2019-10-09 ZRX ohlcv.xlsx']
 
     for file in ohlcv_list:
 
@@ -76,10 +76,15 @@ if __name__ == '__main__':
             Y_pred_ = model.predict(X_test, verbose=1)
             Y_pred2_ = model.predict(X_test2, verbose=1)
 
+            # value_rank = pd.Series(Y_pred_[:, 1]).sort_values(ascending=False).index[:300]
+            # print(value_rank)
+            # quit()
+
             max_value = np.max(Y_pred_, axis=0)
             max_value2 = np.max(Y_pred2_, axis=0)
             Y_pred = np.zeros(len(Y_pred_))
             Y_pred2 = np.zeros(len(Y_pred2_))
+
             for i in range(len(Y_pred_)):
                 if Y_pred_[i][1] > max_value[1] * limit_line:
                     Y_pred[i] = 1
