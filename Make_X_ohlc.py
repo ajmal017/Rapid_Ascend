@@ -238,6 +238,9 @@ def made_x(file, input_data_length, model_num, check_span, get_fig, crop_size=50
     # print(list(map(float, ohlcv_data[0])))
     # quit()
 
+    #       출력되는 Y 데이터 길이를 동일화 시킨다.     #
+    # ohlcv_data = ohlcv_data[-300:]
+
     # 결측 데이터 제외
     if len(ohlcv_data) != 0:
 
@@ -277,6 +280,7 @@ def made_x(file, input_data_length, model_num, check_span, get_fig, crop_size=50
             dataY.append(group_y)
 
         if len(dataX) < 100:
+            print('len(dataX) < 100')
             return None, None, None
 
         X_test = np.array(dataX)
@@ -392,9 +396,9 @@ def made_x_origin(file, input_data_length, model_num, check_span, get_fig, crop_
     else:
         ohlcv_data = file
 
-    if crop_size != 0:
-        ohlcv_data = ohlcv_data[-crop_size:]
-        #
+    #           ohlcv_data slicing      #
+    # ohlcv_data = ohlcv_data[-crop_size:]
+
     # 결측 데이터 제외
     if len(ohlcv_data) != 0:
 

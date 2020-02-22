@@ -8,7 +8,6 @@ import pandas as pd
 from keras.models import load_model
 from matplotlib import pyplot as plt
 from Make_X_ohlc import low_high, low_high_origin
-from Make_X_lowhigh_point import low_high_origin
 from datetime import datetime
 import pybithumb
 import time

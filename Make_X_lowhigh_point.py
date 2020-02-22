@@ -220,8 +220,10 @@ def low_high_origin(Coin, input_data_length, ip_limit=None, trade_limit=None, cr
 
 def made_x(file, input_data_length, model_num, check_span, get_fig, crop_size=500, sudden_death=0):
 
-    ohlcv_excel = pd.read_excel(dir + file, index_col=0)
-
+    if type(file) is str:
+        ohlcv_excel = pd.read_excel(dir + file, index_col=0)
+    else:
+        ohlcv_excel = file
     # ohlcv_excel['CMO'] = cmo(ohlcv_excel)
     # ohlcv_excel['OBV'] = obv(ohlcv_excel)
     # ohlcv_excel['RSI'] = rsi(ohlcv_excel)
@@ -391,72 +393,72 @@ def made_x_origin(file, input_data_length, model_num, check_span, get_fig, crop_
 
     if type(file) is str:
         ohlcv_excel = pd.read_excel(dir + file, index_col=0)
+    else:
+        ohlcv_excel = file
 
-        # ohlcv_excel['MA60'] = ohlcv_excel['close'].rolling(60).mean()
-        # ohlcv_excel['CMO'] = cmo(ohlcv_excel)
-        # ohlcv_excel['OBV'] = obv(ohlcv_excel)
-        # ohlcv_excel['RSI'] = rsi(ohlcv_excel)
+    # ohlcv_excel['MA60'] = ohlcv_excel['close'].rolling(60).mean()
+    # ohlcv_excel['CMO'] = cmo(ohlcv_excel)
+    # ohlcv_excel['OBV'] = obv(ohlcv_excel)
+    # ohlcv_excel['RSI'] = rsi(ohlcv_excel)
 
-        # print(ohlcv_excel)
-        # quit()
+    # print(ohlcv_excel)
+    # quit()
 
-        #   이후 check_span 데이터와 현재 포인트를 비교해서 현재 포인트가 저가인지 고가인지 예측한다.
-        #   진입, 저점, 고점, 거래 안함의 y_label 인 trade_state  >> [1, 2, 0]
-        #   저점과 고점은 최대 3개의 중복 값을 허용한다.
-        trade_state = [np.NaN] * len(ohlcv_excel)
-        for i in range(check_span, len(ohlcv_excel) - check_span):
-            #   저점
-            if ohlcv_excel['close'][i - check_span:i].min() >= ohlcv_excel['close'][i]:
-                if ohlcv_excel['close'][i + 1:i + 1 + check_span].min() >= ohlcv_excel['close'][i]:
-                    # if ohlcv_excel['close'][i - check_span:i + 1 + check_span].value_counts().sort_index().iloc[0] <= 100:
-                    if 1 not in trade_state[i - check_span:i]:
-                        trade_state[i] = 1
+    #   이후 check_span 데이터와 현재 포인트를 비교해서 현재 포인트가 저가인지 고가인지 예측한다.
+    #   진입, 저점, 고점, 거래 안함의 y_label 인 trade_state  >> [1, 2, 0]
+    #   저점과 고점은 최대 3개의 중복 값을 허용한다.
+    trade_state = [np.NaN] * len(ohlcv_excel)
+    for i in range(check_span, len(ohlcv_excel) - check_span):
+        #   저점
+        if ohlcv_excel['close'][i - check_span:i].min() >= ohlcv_excel['close'][i]:
+            if ohlcv_excel['close'][i + 1:i + 1 + check_span].min() >= ohlcv_excel['close'][i]:
+                # if ohlcv_excel['close'][i - check_span:i + 1 + check_span].value_counts().sort_index().iloc[0] <= 100:
+                if 1 not in trade_state[i - check_span:i]:
+                    trade_state[i] = 1
+                else:
+                    trade_state[i] = 0
+                # else:
+                #     trade_state[i] = 0
+            else:
+                trade_state[i] = 0
+        #   고점
+        elif ohlcv_excel['close'][i - check_span:i].max() <= ohlcv_excel['close'][i]:
+            if ohlcv_excel['close'][i + 1:i + 1 + check_span].max() <= ohlcv_excel['close'][i]:
+                # if ohlcv_excel['close'][i - check_span:i + 1 + check_span].value_counts().sort_index().iloc[-1] <= 3:
+                    if 2 not in trade_state[i - check_span:i]:
+                        trade_state[i] = 2
                     else:
                         trade_state[i] = 0
-                    # else:
-                    #     trade_state[i] = 0
-                else:
-                    trade_state[i] = 0
-            #   고점
-            elif ohlcv_excel['close'][i - check_span:i].max() <= ohlcv_excel['close'][i]:
-                if ohlcv_excel['close'][i + 1:i + 1 + check_span].max() <= ohlcv_excel['close'][i]:
-                    # if ohlcv_excel['close'][i - check_span:i + 1 + check_span].value_counts().sort_index().iloc[-1] <= 3:
-                        if 2 not in trade_state[i - check_span:i]:
-                            trade_state[i] = 2
-                        else:
-                            trade_state[i] = 0
-                    # else:
-                    #     trade_state[i] = 0
-                else:
-                    trade_state[i] = 0
-
-            #   거래 안함
+                # else:
+                #     trade_state[i] = 0
             else:
                 trade_state[i] = 0
 
-        ohlcv_excel['trade_state'] = trade_state
-        # print(trade_state)
+        #   거래 안함
+        else:
+            trade_state[i] = 0
 
-        # ----------- dataX, dataY 추출하기 -----------#
-        # print(ohlcv_excel.info())
-        # ohlcv_excel.to_excel('test.xlsx')
-        # quit()
+    ohlcv_excel['trade_state'] = trade_state
+    # print(trade_state)
 
-        # NaN 제외하고 데이터 자르기 (데이터가 PIXEL 로 들어간다고 생각하면 된다)
-        #   OBV : -CHECK_SPAN
-        # ohlcv_data = ohlcv_excel.values[: -check_span].astype(np.float)
-        ohlcv_data = ohlcv_excel.values[check_span:-check_span].astype(np.float)
-        # ohlcv_data = ohlcv_excel.values[ohlcv_excel['MA60'].isnull().sum():-check_span].astype(np.float)
-        # ohlcv_data = ohlcv_excel.values[1: -check_span].astype(np.float)
-        # ohlcv_data = ohlcv_excel.values[sum(ohlcv_excel.CMO.isna()): -check_span].astype(np.float)
-        # ohlcv_data = ohlcv_excel.values[sum(ohlcv_excel.RSI.isna()): -check_span].astype(np.float)
+    # ----------- dataX, dataY 추출하기 -----------#
+    # print(ohlcv_excel.info())
+    # ohlcv_excel.to_excel('test.xlsx')
+    # quit()
 
-        # print(pd.DataFrame(ohlcv_data).info())
-        # print(pd.DataFrame(ohlcv_data).to_excel('test.xlsx'))
-        # print(list(map(float, ohlcv_data[0])))
-        # quit()
-    else:
-        ohlcv_data = file
+    # NaN 제외하고 데이터 자르기 (데이터가 PIXEL 로 들어간다고 생각하면 된다)
+    #   OBV : -CHECK_SPAN
+    # ohlcv_data = ohlcv_excel.values[: -check_span].astype(np.float)
+    ohlcv_data = ohlcv_excel.values[check_span:-check_span].astype(np.float)
+    # ohlcv_data = ohlcv_excel.values[ohlcv_excel['MA60'].isnull().sum():-check_span].astype(np.float)
+    # ohlcv_data = ohlcv_excel.values[1: -check_span].astype(np.float)
+    # ohlcv_data = ohlcv_excel.values[sum(ohlcv_excel.CMO.isna()): -check_span].astype(np.float)
+    # ohlcv_data = ohlcv_excel.values[sum(ohlcv_excel.RSI.isna()): -check_span].astype(np.float)
+
+    # print(pd.DataFrame(ohlcv_data).info())
+    # print(pd.DataFrame(ohlcv_data).to_excel('test.xlsx'))
+    # print(list(map(float, ohlcv_data[0])))
+    # quit()
 
     if crop_size != 0:
         ohlcv_data = ohlcv_data[crop_size:]

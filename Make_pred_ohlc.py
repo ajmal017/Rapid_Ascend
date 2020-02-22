@@ -15,10 +15,10 @@ ohlcv_list = os.listdir(dir)
 if __name__ == '__main__':
 
     #           PARAMS           #
-    input_data_length = 54
-    model_num = '23_400000'
-    crop_size = 154     # 이전 저점까지 slicing
-    crop_size2 = 154
+    input_data_length = 300
+    model_num = '39'
+    crop_size = 350     # 이전 저점까지 slicing
+    crop_size2 = 350
     limit_line = 0.97    # 다음 저점을 고르기 위한 limit_line
     limit_line2 = 0.8
     sudden_death = 0
@@ -52,8 +52,8 @@ if __name__ == '__main__':
         print('loading %s' % file)
 
         try:
-            X_test, _, sliced_ohlc = made_x_origin(file, input_data_length, model_num, check_span, 0, crop_size=crop_size, sudden_death=sudden_death)
-            X_test2, _, sliced_ohlc2 = made_x_origin(file, input_data_length, model_num, check_span, 0, crop_size=crop_size2, sudden_death=sudden_death2)
+            X_test, _, sliced_ohlc = made_x(file, input_data_length, model_num, check_span, 0, crop_size=crop_size, sudden_death=sudden_death)
+            X_test2, _, sliced_ohlc2 = made_x(file, input_data_length, model_num, check_span, 0, crop_size=crop_size2, sudden_death=sudden_death2)
             # X_test, _ = low_high(Coin, input_data_length, sudden_death=1.)
             # closeprice = np.roll(np.array(list(map(lambda x: x[-1][[1]][0], X_test))), -1)
             # print(X_test)
@@ -77,11 +77,15 @@ if __name__ == '__main__':
             Y_pred2_ = model.predict(X_test2, verbose=1)
 
             # value_rank = pd.Series(Y_pred_[:, 1]).sort_values(ascending=False).index[:300]
+            # print(Y_pred2_[:, [2]])
+            # quit()
             # print(value_rank)
             # quit()
 
             max_value = np.max(Y_pred_, axis=0)
             max_value2 = np.max(Y_pred2_, axis=0)
+            # Y_pred = np.argmax(Y_pred_, axis=1)
+            # Y_pred2 = np.argmax(Y_pred2_, axis=1)
             Y_pred = np.zeros(len(Y_pred_))
             Y_pred2 = np.zeros(len(Y_pred2_))
 
