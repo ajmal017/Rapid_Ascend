@@ -7,6 +7,7 @@ from sklearn.preprocessing import MinMaxScaler
 import pybithumb
 warnings.filterwarnings("ignore")
 pd.set_option('display.max_rows', 500)
+pd.set_option('display.max_columns', 1500)
 
 Scaler = MinMaxScaler()
 
@@ -92,7 +93,7 @@ def low_high(Coin, input_data_length, trade_limit=None):
         return X_test, closeprice
 
 
-def made_x(file, input_data_length, model_num, check_span, Range_fluc, get_fig):
+def made_x(file, input_data_length, model_num, check_span, Range_fluc, get_fig, crop_size=0):
 
     ohlcv_excel = pd.read_excel(dir + file, index_col=0)
 
@@ -108,11 +109,6 @@ def made_x(file, input_data_length, model_num, check_span, Range_fluc, get_fig):
     #
     # ohlcv_excel['MA60'] = ohlcv_excel['close'].rolling(60).mean()
 
-    # 이후 check_span 개 데이터의 고 / 저점의 폭
-    ohlcv_excel['fluc_close'] = ohlcv_excel['close'].shift(-check_span).rolling(check_span).max() / \
-                                ohlcv_excel['close'].shift(-check_span).rolling(check_span).min()
-    ohlcv_excel['fluc_close'] = np.where(ohlcv_excel['fluc_close'] > Range_fluc, 1, 0)
-
     # ----------- dataX, dataY 추출하기 -----------#
     # print(ohlcv_excel.tail(20))
     # ohlcv_excel.to_excel('test.xlsx')
@@ -121,7 +117,7 @@ def made_x(file, input_data_length, model_num, check_span, Range_fluc, get_fig):
     # NaN 제외하고 데이터 자르기 (데이터가 PIXEL 로 들어간다고 생각하면 된다)
     # MA60 부터 FLUC_CLOSE, 존재하는 값만 슬라이싱
     # ohlcv_data = ohlcv_excel.values[ohlcv_excel['MA60'].isnull().sum(): -check_span].astype(np.float)
-    ohlcv_data = ohlcv_excel.values[:-check_span].astype(np.float)
+    ohlcv_data = ohlcv_excel.values[:].astype(np.float)
     # print(len(ohlcv_data))
     # print(list(map(float, ohlcv_data[0])))
     # quit()
@@ -137,7 +133,6 @@ def made_x(file, input_data_length, model_num, check_span, Range_fluc, get_fig):
         # MA60 = ohlcv_data[:, [-2]]
 
         #       y data      #
-        fluc_close = ohlcv_data[:, [-1]]
 
         scaled_price = min_max_scaler(price)
         # scaled_volume = min_max_scaler(volume)
@@ -148,8 +143,146 @@ def made_x(file, input_data_length, model_num, check_span, Range_fluc, get_fig):
         # print(fluc_close.shape)
 
         # x = np.concatenate((scaled_price, scaled_volume, scaled_OBV), axis=1)  # axis=1, 세로로 합친다
-        x = scaled_price
-        y = fluc_close
+
+        ohlcv_excel.iloc[:, :4] = scaled_price
+        # print(ohlcv_excel)
+        # quit()
+
+        # 이후 check_span 개 데이터의 고 / 저점의 폭
+        ohlcv_excel['fluc_close'] = ohlcv_excel['close'].shift(-check_span).rolling(check_span).max() -\
+                                    ohlcv_excel['close']
+        ohlcv_excel['fluc_close'] = np.where(ohlcv_excel['fluc_close'] > Range_fluc, 1, 0)
+        fluc_close = ohlcv_excel['fluc_close'].values.astype(np.float)
+        # plt.plot(scaled_price)
+        # plt.show()
+
+        x = price[:-check_span]
+        y = fluc_close[:-check_span]
+
+        # print(x.shape, y.shape)  # (258, 6) (258, 1)
+        # quit()
+
+        dataX = []  # input_data length 만큼 담을 dataX 그릇
+        dataY = []  # Target 을 담을 그릇
+
+        for i in range(crop_size, len(x)):  # 마지막 데이터까지 다 긇어모은다.
+            try:
+                group_x = x[i - crop_size: i]
+                group_y = y[i]
+                scaled_price = min_max_scaler(group_x)
+                group_x = scaled_price[-input_data_length:]
+
+                dataX.append(group_x)  # dataX 리스트에 추가
+                dataY.append(group_y)
+
+            except Exception as e:
+                pass
+
+        # print(len(dataX))
+        # quit()
+        if len(dataX) < 100:
+            return None
+
+        sliced_ohlcv = x[input_data_length:, :]
+
+        # ----------- FLUC_CLOSE TO SPAN, 넘겨주기 위해서 INDEX 를 담아주어야 한다. -----------#
+        if get_fig == 1:
+            spanlist = []
+            for m in range(len(fluc_close[crop_size:])):
+                if fluc_close[crop_size:][m] > 0.5:
+                    if m + 1 < len(fluc_close[crop_size:]):
+                        spanlist.append((m, m + 1))
+                    else:
+                        spanlist.append((m - 1, m))
+
+            # ----------- 인덱스 초기화 됨 -----------#
+            # print(dataX[0][-1][1])
+            # print(list(map(lambda x: x[-1][1], dataX)))
+
+            # ----------- Chart 그리기 -----------#
+            plt.plot(list(map(lambda x: x[-1][1], dataX)), 'gold', label='close')
+            # plt.plot(scaled_OBV, 'b', label='OBV')
+            plt.legend(loc='upper right')
+
+            # Spanning
+            for i in range(len(spanlist)):
+                plt.axvspan(spanlist[i][0], spanlist[i][1], facecolor='c', alpha=0.7)
+
+            Date = file.split()[0]
+            Coin = file.split()[1].split('.')[0]
+            plt.savefig('./Figure_data/%s_%s/%s %s.png' % (input_data_length, model_num, Date, Coin), dpi=500)
+            plt.close()
+            # plt.show()
+            # ----------- Chart 그리기 -----------#
+
+        return dataX, dataY, sliced_ohlcv
+
+
+def made_x_origin(file, input_data_length, model_num, check_span, Range_fluc, get_fig):
+
+    ohlcv_excel = pd.read_excel(dir + file, index_col=0)
+
+    # obv = [0] * len(ohlcv_excel)
+    # for m in range(1, len(ohlcv_excel)):
+    #     if ohlcv_excel['close'].iloc[m] > ohlcv_excel['close'].iloc[m - 1]:
+    #         obv[m] = obv[m - 1] + ohlcv_excel['volume'].iloc[m]
+    #     elif ohlcv_excel['close'].iloc[m] == ohlcv_excel['close'].iloc[m - 1]:
+    #         obv[m] = obv[m - 1]
+    #     else:
+    #         obv[m] = obv[m - 1] - ohlcv_excel['volume'].iloc[m]
+    # ohlcv_excel['OBV'] = obv
+    #
+    # ohlcv_excel['MA60'] = ohlcv_excel['close'].rolling(60).mean()
+
+    # ----------- dataX, dataY 추출하기 -----------#
+    # print(ohlcv_excel.tail(20))
+    # ohlcv_excel.to_excel('test.xlsx')
+    # quit()
+
+    # NaN 제외하고 데이터 자르기 (데이터가 PIXEL 로 들어간다고 생각하면 된다)
+    # MA60 부터 FLUC_CLOSE, 존재하는 값만 슬라이싱
+    # ohlcv_data = ohlcv_excel.values[ohlcv_excel['MA60'].isnull().sum(): -check_span].astype(np.float)
+    ohlcv_data = ohlcv_excel.values[:].astype(np.float)
+    # print(len(ohlcv_data))
+    # print(list(map(float, ohlcv_data[0])))
+    # quit()
+
+    # 결측 데이터 제외
+    if len(ohlcv_data) != 0:
+
+        #           데이터 전처리         #
+        #       x data      #
+        price = ohlcv_data[:, :4]
+        # volume = ohlcv_data[:, [4]]
+        # OBV = ohlcv_data[:, [-3]]
+        # MA60 = ohlcv_data[:, [-2]]
+
+        #       y data      #
+
+        scaled_price = min_max_scaler(price)
+        # scaled_volume = min_max_scaler(volume)
+        # scaled_OBV = min_max_scaler(OBV)
+        # scaled_MA60 = min_max_scaler(MA60)
+        # print(scaled_MA60.shape)
+
+        # print(fluc_close.shape)
+
+        # x = np.concatenate((scaled_price, scaled_volume, scaled_OBV), axis=1)  # axis=1, 세로로 합친다
+
+        ohlcv_excel.iloc[:, :4] = scaled_price
+        # print(ohlcv_excel)
+        # quit()
+
+        # 이후 check_span 개 데이터의 고 / 저점의 폭
+        ohlcv_excel['fluc_close'] = ohlcv_excel['close'].shift(-check_span).rolling(check_span).max() -\
+                                    ohlcv_excel['close']
+        ohlcv_excel['fluc_close'] = np.where(ohlcv_excel['fluc_close'] > Range_fluc, 1, 0)
+        fluc_close = ohlcv_excel['fluc_close'].values.astype(np.float)
+        # plt.plot(scaled_price)
+        # plt.show()
+
+        x = scaled_price[:-check_span]
+        y = fluc_close[:-check_span]
 
         # print(x.shape, y.shape)  # (258, 6) (258, 1)
         # quit()
@@ -170,7 +303,10 @@ def made_x(file, input_data_length, model_num, check_span, Range_fluc, get_fig):
             dataX.append(group_x)  # dataX 리스트에 추가
             dataY.append(group_y)  # dataY 리스트에 추가
 
-        sliced_ohlcv = ohlcv_data[input_data_length:, :4]
+        if len(dataX) < 100:
+            return None
+
+        sliced_ohlcv = x[input_data_length:, :]
 
         # ----------- FLUC_CLOSE TO SPAN, 넘겨주기 위해서 INDEX 를 담아주어야 한다. -----------#
         if get_fig == 1:
@@ -185,7 +321,7 @@ def made_x(file, input_data_length, model_num, check_span, Range_fluc, get_fig):
             # ----------- 인덱스 초기화 됨 -----------#
 
             # ----------- Chart 그리기 -----------#
-            plt.plot(min_max_scaler(ohlcv_data[:, [1]]), 'gold', label='close')
+            plt.plot(x[:, [1]], 'gold', label='close')
             # plt.plot(scaled_OBV, 'b', label='OBV')
             plt.legend(loc='upper right')
 
@@ -206,11 +342,11 @@ def made_x(file, input_data_length, model_num, check_span, Range_fluc, get_fig):
 if __name__ == '__main__':
 
     #           Params          #
-    input_data_length = 54
-    model_num = input('Press model num : ')
-    check_span = 30
-    Range_fluc = 1.07  # >> Best Param 을 찾도록 한다.
-    get_fig = 0
+    input_data_length = 100
+    model_num = 40
+    check_span = 100
+    Range_fluc = 0.4  # >> Best Param 을 찾도록 한다.
+    get_fig = 1
 
     #       Make folder      #
     try:
@@ -222,13 +358,15 @@ if __name__ == '__main__':
     Made_X = []
     Made_Y = []
 
+    # ohlcv_list = ['2020-01-15 ETC ohlcv.xlsx']
+
     for file in ohlcv_list:
 
         if int(file.split()[0].split('-')[1]) != 1:
             continue
 
-        result = made_x(file, input_data_length, model_num, check_span, Range_fluc, get_fig)
-
+        result = made_x(file, input_data_length, model_num, check_span, Range_fluc, get_fig, crop_size=300)
+        # quit()
         # ------------ 데이터가 있으면 dataX, dataY 병합하기 ------------#
         if result is not None:
 
