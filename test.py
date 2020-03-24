@@ -3,15 +3,155 @@ import pandas as pd
 import numpy as np
 from fake_useragent import UserAgent
 import time
-pd.set_option('display.max_rows', 1500)
+import os
+import cv2
+pd.set_option('display.max_rows', 3000)
+pd.set_option('display.max_columns', 3000)
+import matplotlib.pyplot as plt
+
+
+Made_X = np.load('Made_X/Made_X %s_%s.npy' % (30, 64), allow_pickle=True)
+print(Made_X.shape)
+# img = cv2.imread('./Made_Chart_all/30_66/2020-01-10 BTC_106.png')
+# img2 = img.copy()
+# gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+#
+# # 해리스 코너 검출 ---①
+# # 값 변경해보기
+# # 변화량 결과의 최대값 10% 이상의 좌표 구하기 ---②
+# gray = np.float32(gray)
+# # corners = cv2.goodFeaturesToTrack(gray, 25, 0.01, 10)
+# # corners = np.int0(corners)
+# dst = cv2.cornerHarris(gray, 2, 3, 0.1)
+# dst = cv2.dilate(dst, None)
+#
+# img[dst > 0.1 * dst.max()] = [0, 0, 0]
+# plt.imshow(img)
+# plt.show()
+# #
+# result = (0, 0, 0, 0)
+# result1 = (1, 1, 1, 1)
+# for i in range(5):
+#     result = tuple(sum(elem) for elem in zip(result, result1))
+#
+# print(result)
+# total_df = pd.DataFrame(
+#     columns=['short', 'long', 'signal', 'total_profit_avg', 'plus_profit_avg', 'minus_profit_avg', 'avg_profit_avg',
+#              'min_profit_avg', 'std_avg'])
+#
+# file_list = os.listdir('BestSet')
+# print(file_list)
+# txt_list = list()
+# for file in file_list:
+#     try:
+#         if file.split('.')[1] == 'txt':
+#             txt_list.append(file)
+#     except:
+#         pass
+#
+# for txt in txt_list:
+#     with open("BestSet/%s" % txt) as f:
+#         lines = f.readlines()
+#         for index, value in enumerate(lines):
+#             factors = value.split()
+#             # print(factors)
+#             if len(factors) == 0:
+#                 continue
+#             if factors[0] != txt.split()[1].split('.')[0]:
+#                 continue
+#             short = int(factors[0])
+#             long = int(factors[1])
+#             signal = int(factors[2])
+#             total_profit_avg = float(factors[3])
+#
+#             result_df = pd.DataFrame(data=[[short, long, signal, total_profit_avg]],
+#                                      columns=['short', 'long', 'signal', 'total_profit_avg'])
+#             total_df = total_df.append(result_df)
+#             # print(total_df)
+#             # quit()
+#     total_df.to_excel('./BestSet/total_df %s.xlsx' % short)
+#
+# file_list = os.listdir('BestSet')
+# df_list = list()
+# for file in file_list:
+#     try:
+#         if file.split('.')[1] == 'xlsx':
+#             df_list.append(file)
+#     except:
+#         pass
+#
+# # print(df_list)
+# # quit()
+# for df in df_list:
+#     result_df = pd.read_excel('./BestSet/%s' % df, index_col=0)
+#     total_df = total_df.append(result_df)
+#
+# sorted_df = total_df.sort_values(by='std_avg', ascending=True)
+# aligned_df = sorted_df.reset_index(drop=True)
+# print(aligned_df.head(50).drop_duplicates())
+# quit()
+# aligned_df = aligned_df.head(50)
+# plt.subplot(311)
+# plt.scatter(aligned_df['total_profit_avg'], aligned_df['short'], )
+# plt.subplot(312)
+# plt.scatter(aligned_df['total_profit_avg'], aligned_df['long'], )
+# plt.subplot(313)
+# plt.scatter(aligned_df['total_profit_avg'], aligned_df['signal'], )
+# plt.show()
+    # print(lines)
+    # quit()
+# input_data_length = 30
+# model_num = 73
+# file_cnt = 1
+# while True:
+#     try:
+#         result_x = np.load('Made_X/Made_X %s_%s %s.npy' % (input_data_length,
+#                                                            model_num, file_cnt))
+#         result_y = np.load('Made_X/Made_Y %s_%s %s.npy' % (input_data_length,
+#                                                            model_num, file_cnt))
+#         if file_cnt == 1:
+#             Made_X = result_x
+#             Made_Y = result_y
+#         else:
+#             Made_X = np.vstack((Made_X, result_x))
+#             Made_Y = np.vstack((Made_Y, result_y))
+#         print(Made_X.shape[0])
+#
+#         file_cnt += 1
+#     except Exception as e:
+#         print(e)
+#         break
+#
+# print(Made_X.shape)
+# print(Made_Y.shape)
+# np.save('./Made_X/Made_X %s_%s' % (input_data_length, model_num), (Made_X))
+# np.save('./Made_X/Made_Y %s_%s' % (input_data_length, model_num), (Made_Y))
+
+# arr = np.arange(10).reshape(1, 2, 5, 1)
+# print(arr.shape)
+# print(1 < 2 < 3)
+# ar = np.arange(2)
+# lis = [ar] * 3
+# # print(lis)
+# result = lis[0]
+# for i in range(1, len(lis)):
+#     result = np.vstack((result, lis[i]))
+# print(result.shape)
+# dir_path = './Made_Chart_to_np/30_64/'
+# rename_list = os.listdir(dir_path)
+# print(rename_list)
+# for file in rename_list:
+#     new_name = file.replace('_', ' ')
+#     os.rename(dir_path + file, dir_path + new_name)
+
 
 # print(('d', 'c' in list('d1')))
 # for coin in pybithumb.get_ticker
 # string = 'dfs.xlsx'
 # print(string.endswith('.xlsx'))
 # print(np.arange(10) + 1)
-test = np.arange(10)
-test[test.values]
+# test = np.arange(10)
+# test[test.values]
 # s():
 #     df_sample = pybithumb.get_ohlcv(coin, 'KRW', 'minute1')    #.loc['2020-02-16 22:57:00', :]    # 2020-02-16 22:57:00
 #     # df_sample = pd.read_excel('')
@@ -27,7 +167,9 @@ test[test.values]
 #         break
 
 # start_time = time.time()
-# pybithumb.get_ohlcv('BTC', 'KRW', 'minute1')
+# df = pybithumb.get_ohlcv('BTC', 'KRW', 'minute1')
+# print(df.index.name)
+# print(1 == 1)
 # print(time.time() - start_time)
 # for i in range(10):
 #     start_time = time.time()
@@ -63,11 +205,31 @@ test[test.values]
 # print(int(BVC_data.TotalProfits.cumprod().iloc[-1]))
 
 #
-# Coins = pybithumb.get_tickers()
+# Coinlist = pybithumb.get_tickers()
+# Fluclist = []
+# while True:
+#     try:
+#         for Coin in Coinlist:
+#             tickerinfo = pybithumb.PublicApi.ticker(Coin)
+#             data = tickerinfo['data']
+#             fluctate = data['fluctate_rate_24H']
+#             Fluclist.append(fluctate)
+#             time.sleep(1 / 90)
+#         break
+#
+#     except Exception as e:
+#         Fluclist.append(None)
+#         print('Error in making Topcoin :', e)
+#
+# Fluclist = list(map(float, Fluclist))
+# series = pd.Series(Fluclist, Coinlist)
+# series = series.sort_values(ascending=False)
+# TopCoin = list(series.index)[:20]
 # # #
-# for Coin in Coins:
+# for Coin in TopCoin:
 #     ohlcv_data = pybithumb.get_ohlcv(Coin, 'KRW', 'minute1')
-#     print(Coin, ohlcv_data.close.max() / ohlcv_data.close.min(), len(ohlcv_data))
+#     if len(ohlcv_data) > 500:
+#         print(Coin, len(ohlcv_data))
 
 # list = [1, 1, 1]
 # print(set(list))

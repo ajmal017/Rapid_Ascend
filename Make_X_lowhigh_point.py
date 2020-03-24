@@ -564,8 +564,8 @@ def made_x_origin(file, input_data_length, model_num, check_span, get_fig, crop_
 if __name__ == '__main__':
 
     # ----------- Params -----------#
-    input_data_length = 54
-    model_num = '23_lowhigh_point'
+    input_data_length = 30
+    model_num = '57_lowhigh_point'
 
     #       Make folder      #
     try:
@@ -573,13 +573,13 @@ if __name__ == '__main__':
 
     except Exception as e:
         pass
-    check_span = 20
+    check_span = 30
     get_fig = 1
 
     Made_X = []
     Made_Y = []
 
-    ohlcv_list = ['2019-10-07 ETHOS ohlcv.xlsx']
+    ohlcv_list = ['2020-02-26 FZZ ohlcv.xlsx']
 
     for file in ohlcv_list:
 

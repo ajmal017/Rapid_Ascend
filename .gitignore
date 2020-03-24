@@ -1,6 +1,9 @@
 # Folder
 Made_X/
-Made_X_low/
-Made_X_high/
+Made_Chart_all/
+model/
+Figure_data/
+Figure_pred/
 
 # File
+Keys.txt

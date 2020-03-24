@@ -569,8 +569,8 @@ def made_x_origin(file, input_data_length, model_num, check_span, get_fig, crop_
 if __name__ == '__main__':
 
     # ----------- Params -----------#
-    input_data_length = 54
-    model_num = '23_lowhigh_point'
+    input_data_length = 30
+    model_num = '57_lowhigh_point'
 
     #       Make folder      #
     try:
@@ -578,36 +578,36 @@ if __name__ == '__main__':
 
     except Exception as e:
         pass
-    check_span = 20
+    check_span = 30
     get_fig = 1
 
     Made_X = []
     Made_Y = []
 
     #           Making TopCoin List         #
-    Coinlist = pybithumb.get_tickers()
-    Fluclist = []
-    while True:
-        try:
-            for Coin in Coinlist:
-                tickerinfo = pybithumb.PublicApi.ticker(Coin)
-                data = tickerinfo['data']
-                fluctate = data['fluctate_rate_24H']
-                Fluclist.append(fluctate)
-                time.sleep(1 / 90)
-            break
-
-        except Exception as e:
-            Fluclist.append(None)
-            print('Error in making Topcoin :', e)
-
-    Fluclist = list(map(float, Fluclist))
-    series = pd.Series(Fluclist, Coinlist)
-    series = series.sort_values(ascending=False)
-
-    series = series[:20]
-    TopCoin = list(series.index)
-    # TopCoin = ['link'.upper()]
+    # Coinlist = pybithumb.get_tickers()
+    # Fluclist = []
+    # while True:
+    #     try:
+    #         for Coin in Coinlist:
+    #             tickerinfo = pybithumb.PublicApi.ticker(Coin)
+    #             data = tickerinfo['data']
+    #             fluctate = data['fluctate_rate_24H']
+    #             Fluclist.append(fluctate)
+    #             time.sleep(1 / 90)
+    #         break
+    #
+    #     except Exception as e:
+    #         Fluclist.append(None)
+    #         print('Error in making Topcoin :', e)
+    #
+    # Fluclist = list(map(float, Fluclist))
+    # series = pd.Series(Fluclist, Coinlist)
+    # series = series.sort_values(ascending=False)
+    #
+    # series = series[:20]
+    # TopCoin = list(series.index)
+    TopCoin = ['wom'.upper()]
 
     for file in TopCoin:
 

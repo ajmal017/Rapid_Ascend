@@ -329,6 +329,24 @@ def macd(ohlcv_excel, short=12, long=26, signal=9):
         ohlcv_excel['close'].ewm(span=long, min_periods=long-1, adjust=False).mean()
     ohlcv_excel['MACD_Signal'] = ohlcv_excel['MACD'].ewm(span=signal, min_periods=signal-1, adjust=False).mean()
     ohlcv_excel['MACD_OSC'] = ohlcv_excel.MACD - ohlcv_excel.MACD_Signal
+    ohlcv_excel['MACD_Zero'] = 0
+
+    return
+
+
+def ema_ribbon(ohlcv_excel, ema_1=5, ema_2=8, ema_3=13):
+
+    ohlcv_excel['EMA_1'] = ohlcv_excel['close'].ewm(span=ema_1, min_periods=ema_1-1, adjust=False).mean()
+    ohlcv_excel['EMA_2'] = ohlcv_excel['close'].ewm(span=ema_2, min_periods=ema_2-1, adjust=False).mean()
+    ohlcv_excel['EMA_3'] = ohlcv_excel['close'].ewm(span=ema_3, min_periods=ema_3-1, adjust=False).mean()
+
+    return
+
+
+def ema_cross(ohlcv_excel, ema_1=30, ema_2=60):
+
+    ohlcv_excel['EMA_1'] = ohlcv_excel['close'].ewm(span=ema_1, min_periods=ema_1 - 1, adjust=False).mean()
+    ohlcv_excel['EMA_2'] = ohlcv_excel['close'].ewm(span=ema_2, min_periods=ema_2 - 1, adjust=False).mean()
 
     return
 

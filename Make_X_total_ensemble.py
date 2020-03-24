@@ -4,23 +4,25 @@ import pybithumb
 import os
 import matplotlib.pyplot as plt
 import warnings
-from sklearn.preprocessing import MinMaxScaler
+from datetime import datetime
 from Funcs_CNN4 import rsi, obv, cmo, macd
 warnings.filterwarnings("ignore")
 pd.set_option('display.max_rows', 1500)
 
-Scaler = MinMaxScaler()
 
 home_dir = os.path.expanduser('~')
 dir = home_dir + '/OneDrive/CoinBot/ohlcv/'
 ohlcv_list = os.listdir(dir)
 
 
-def min_max_scaler(price):
-    Scaler = MinMaxScaler()
-    Scaler.fit(price)
+def min_max_scaler(x):
+    scaled_x = (x - x.min()) / (x.max() - x.min())
+    return scaled_x
 
-    return Scaler.transform(price)
+
+def max_abs_scaler(x):
+    scaled_x = x / abs(x).max()
+    return scaled_x
 
 
 def low_high(Coin, input_data_length, ip_limit=None, trade_limit=None):
@@ -93,33 +95,55 @@ def low_high(Coin, input_data_length, ip_limit=None, trade_limit=None):
         return X_test, closeprice
 
 
-def made_x(file, input_data_length, model_num, check_span, get_fig):
+def made_x(file, input_data_length, model_num, check_span, get_fig, crop_size=None):
 
-    ohlcv_excel = pd.read_excel(dir + file, index_col=0)
+    if type(file) == str:
+        ohlcv_excel = pd.read_excel(dir + file, index_col=0)
+        Date = file.split()[0]
+        Coin = file.split()[1].split('.')[0]
+    else:
+        ohlcv_excel = file
+        Date = str(datetime.now()).split()[0]
+        Coin = file.index.name
 
-    ohlcv_excel['CMO'] = cmo(ohlcv_excel)
+    ohlcv_excel['MA20'] = ohlcv_excel['close'].rolling(20).mean()
+    ohlcv_excel['CMO'] = cmo(ohlcv_excel, period=60)
     ohlcv_excel['OBV'] = obv(ohlcv_excel)
-    ohlcv_excel['RSI'] = rsi(ohlcv_excel)
-    macd(ohlcv_excel)
+    ohlcv_excel['RSI'] = rsi(ohlcv_excel, period=60)
+    macd(ohlcv_excel, short=30, long=60, signal=30)
 
-    # print(ohlcv_excel.iloc[:, [-7, -5]])
-    # print(ohlcv_excel.columns)
-    quit()
+    # print(ohlcv_excel)
+    # quit()
 
     #   이후 check_span 데이터와 현재 포인트를 비교해서 현재 포인트가 저가인지 고가인지 예측한다.
     #   진입, 저점, 고점, 거래 안함의 y_label 인 trade_state  >> [1, 2, 0]
     #   저점과 고점은 최대 3개의 중복 값을 허용한다.
     trade_state = [np.NaN] * len(ohlcv_excel)
     for i in range(len(ohlcv_excel) - check_span):
+        # #   저점
+        # if ohlcv_excel['close'][i + 1:i + 1 + check_span].min() >= ohlcv_excel['close'][i]:
+        #     if ohlcv_excel['close'][i:i + 1 + check_span].value_counts().sort_index().iloc[0] <= 3:
+        #         trade_state[i] = 1
+        #     else:
+        #         trade_state[i] = 0
+        # #   고점
+        # elif ohlcv_excel['close'][i + 1:i + 1 + check_span].max() <= ohlcv_excel['close'][i]:
+        #     if ohlcv_excel['close'][i:i + 1 + check_span].value_counts().sort_index().iloc[-1] <= 3:
+        #         trade_state[i] = 2
+        #     else:
+        #         trade_state[i] = 0
+        # #   거래 안함
+        # else:
+        #     trade_state[i] = 0
         #   저점
-        if ohlcv_excel['close'][i + 1:i + 1 + check_span].min() >= ohlcv_excel['close'][i]:
-            if ohlcv_excel['close'][i:i + 1 + check_span].value_counts().sort_index().iloc[0] <= 3:
+        if ohlcv_excel['MACD'][i + 1:i + 1 + check_span].min() >= ohlcv_excel['MACD'][i]:
+            if ohlcv_excel['MACD'][i:i + 1 + check_span].value_counts().sort_index().iloc[0] <= 3:
                 trade_state[i] = 1
             else:
                 trade_state[i] = 0
         #   고점
-        elif ohlcv_excel['close'][i + 1:i + 1 + check_span].max() <= ohlcv_excel['close'][i]:
-            if ohlcv_excel['close'][i:i + 1 + check_span].value_counts().sort_index().iloc[-1] <= 3:
+        elif ohlcv_excel['MACD'][i + 1:i + 1 + check_span].max() <= ohlcv_excel['MACD'][i]:
+            if ohlcv_excel['MACD'][i:i + 1 + check_span].value_counts().sort_index().iloc[-1] <= 3:
                 trade_state[i] = 2
             else:
                 trade_state[i] = 0
@@ -140,63 +164,82 @@ def made_x(file, input_data_length, model_num, check_span, get_fig):
     # ohlcv_data = ohlcv_excel.values[sum(ohlcv_excel.CMO.isna()): -check_span].astype(np.float)
     ohlcv_data = ohlcv_excel.values[sum(ohlcv_excel.MACD_Signal.isna()): -check_span].astype(np.float)
 
-    # print(pd.DataFrame(ohlcv_data).info())
-    # print(pd.DataFrame(ohlcv_data).to_excel('test.xlsx'))
-    # print(list(map(float, ohlcv_data[0])))
-    # quit()
+    plt.plot(ohlcv_data[:, [-5]])
+    plt.plot(ohlcv_data[:, [-2]], 'g')
+    span_list = list()
+    for i in range(len(ohlcv_data[:, [-1]])):
+        if ohlcv_data[:, [-1]][i] == 2.:
+            span_list.append((i, i + 1))
+
+    for i in range(len(span_list)):
+        plt.axvspan(span_list[i][0], span_list[i][1], facecolor='c', alpha=0.7)
+
+    plt.show()
+    quit()
 
     # 결측 데이터 제외
     if len(ohlcv_data) != 0:
 
         #          데이터 전처리         #
         #   Fixed X_data    #
-        price = ohlcv_data[:, :4]
-        volume = ohlcv_data[:, [4]]
-        CMO = ohlcv_data[:, [-7]]
-        OBV = ohlcv_data[:, [-6]]
-        RSI = ohlcv_data[:, [-5]]
-        MACD = ohlcv_data[:, [-4]]
-        MACD_Signal = ohlcv_data[:, [-3]]
-        MACD_OSC = ohlcv_data[:, [-2]]
+        #   price ma
+        ohlcv_data[:, [0, 1, 2, 3, 5]] = min_max_scaler(ohlcv_data[:, [0, 1, 2, 3, 5]])
+        #   volume
+        ohlcv_data[:, [4]] = min_max_scaler(ohlcv_data[:, [4]])
+        #   CMO
+        ohlcv_data[:, [-8]] = max_abs_scaler(ohlcv_data[:, [-8]])
+        #   OBV
+        ohlcv_data[:, [-7]] = min_max_scaler(ohlcv_data[:, [-7]])
+        #   RSI
+        ohlcv_data[:, [-6]] = min_max_scaler(ohlcv_data[:, [-6]])
+        #   MACD
+        ohlcv_data[:, -5:-1] = max_abs_scaler(ohlcv_data[:, -5:-1])
 
         #   Flexible Y_data    #
         trade_state = ohlcv_data[:, [-1]]
-
-        scaled_price = min_max_scaler(price)
-        scaled_volume = min_max_scaler(volume)
-        scaled_CMO = min_max_scaler(CMO)
-        scaled_OBV = min_max_scaler(OBV)
-        scaled_RSI = min_max_scaler(RSI)
-        scaled_MACD = min_max_scaler(MACD)
-        scaled_MACD_Signal = min_max_scaler(MACD_Signal)
-        scaled_MACD_OSC = min_max_scaler(MACD_OSC)
-
-        x = np.concatenate((scaled_price, scaled_volume, scaled_CMO, scaled_OBV, scaled_RSI,
-                            scaled_MACD, scaled_MACD_Signal, scaled_MACD_OSC), axis=1)  # axis=1, 세로로 합친다
         y = trade_state
         # print(x.shape, y_low.shape)  # (258, 6) (258, 1)
+        # quit()
+        # print(ohlcv_data)
         # quit()
 
         dataX = []  # input_data length 만큼 담을 dataX 그릇
         dataY = []  # Target 을 담을 그릇
-
-        for i in range(input_data_length, len(ohlcv_data)):
-            # group_x >> 이전 완성된 데이터를 사용해보도록 한다. (진입하는 시점은 데이터가 완성되어있지 않으니까)
-            group_x = x[i - input_data_length: i]  # group_y 보다 1개 이전 데이터
+        for i in range(crop_size, len(ohlcv_data)):  # 마지막 데이터까지 다 긇어모은다.
+            group_x = ohlcv_data[i - crop_size: i]
             group_y = y[i]
-            # quit()
+            price = group_x[:, :4]
+            volume = group_x[:, [4]]
+            MA20 = group_x[:, [5]]
+            CMO = group_x[:, [-8]]
+            OBV = group_x[:, [-7]]
+            RSI = group_x[:, [-6]]
+            MACD = group_x[:, -5:-1]
+
+            x = np.concatenate((price, volume, MA20, CMO, OBV, RSI, MACD), axis=1)
+            # x = scaled_x + sudden_death  # axis=1, 세로로 합친다
+            group_x = x[-input_data_length:]
+
+            # plt.subplot(211)
+            # plt.plot(MACD)
+            # plt.subplot(212)
+            # plt.plot(group_x[:, -4:])
+            # plt.show()
+            # print(group_x[0])
 
             #   데이터 값에 결측치가 존재하는 경우 #
             if sum(sum(np.isnan(group_x))) > 0:
-                return None
+                continue
+
             dataX.append(group_x)  # dataX 리스트에 추가
             dataY.append(group_y)
 
-        if len(dataX) < 100:
-            return None
+        # if len(dataX) < 100:
+        #     print('len(dataX) < 100')
+        #     return None, None, None
 
         #       Exstracting fiexd X_data       #
-        sliced_ohlcv = ohlcv_data[input_data_length:, :6]
+        # sliced_ohlcv = min_max_scaler(ohlcv_data[crop_size:, :x.shape[1]])
 
         #                      Get Figure                     #
         if get_fig == 1:
@@ -242,14 +285,14 @@ def made_x(file, input_data_length, model_num, check_span, get_fig):
             # plt.show()
             # ----------- Chart 그리기 -----------#
 
-        return dataX, dataY, sliced_ohlcv
+        return dataX, dataY
 
 
 if __name__ == '__main__':
 
     # ----------- Params -----------#
-    input_data_length = 54
-    model_num = 21
+    input_data_length = 30
+    model_num = 82
     # model_num = input('Press model number : ')
 
     #       Make folder      #
@@ -271,15 +314,15 @@ if __name__ == '__main__':
 
         # file = '2020-01-10 BTC ohlcv.xlsx'
 
-        result = made_x(file, input_data_length, model_num, check_span, get_fig)
+        result = made_x(file, input_data_length, model_num, check_span, get_fig, crop_size=input_data_length)
         # result = low_high('FX', input_data_length)
         # quit()
 
         # ------------ 데이터가 있으면 dataX, dataY 병합하기 ------------#
         if result is not None:
-
-            Made_X += result[0]
-            Made_Y += result[1]
+            if result[0] is not None:
+                Made_X += result[0]
+                Made_Y += result[1]
 
             # 누적 데이터량 표시
             print(file, len(Made_X))
@@ -288,6 +331,6 @@ if __name__ == '__main__':
     X = np.array(Made_X)
     Y = np.array(Made_Y)
 
-    # np.save('./Made_X/Made_X %s_%s' % (input_data_length, model_num), X)
-    # np.save('./Made_X/Made_Y %s_%s' % (input_data_length, model_num), Y)
+    np.save('./Made_X/Made_X %s_%s' % (input_data_length, model_num), X)
+    np.save('./Made_X/Made_Y %s_%s' % (input_data_length, model_num), Y)
 

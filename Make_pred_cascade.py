@@ -3,7 +3,7 @@ import pandas as pd
 from keras.models import load_model
 from matplotlib import pyplot as plt
 import os
-from Make_X_ohlc import made_x, made_x_origin
+from Make_X_total import made_x, made_x_origin
 from keras.utils import np_utils
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 

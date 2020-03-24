@@ -20,7 +20,7 @@ if __name__ == '__main__':
     crop_size = 0     # 이전 저점까지 slicing
     crop_size2 = crop_size
     limit_line = 0.97    # 다음 저점을 고르기 위한 limit_line
-    limit_line2 = 0.8
+    limit_line2 = 0.9
     sudden_death = 0
     sudden_death2 = 0
     check_span = 30
@@ -42,7 +42,7 @@ if __name__ == '__main__':
     #       LOAD MODEL      #
     model = load_model('./model/rapid_ascending %s_%s.hdf5' % (input_data_length, model_num))
 
-    # ohlcv_list = ['2019-10-08 PPT ohlcv.xlsx']
+    # ohlcv_list = ['2019-10-07 LINK ohlcv.xlsx']
 
     for file in ohlcv_list:
 
