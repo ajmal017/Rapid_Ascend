@@ -26,35 +26,15 @@ def max_abs_scaler(x):
 
 if __name__ == '__main__':
 
-    #           Making TopCoin List         #
-    Coinlist = pybithumb.get_tickers()
-    Fluclist = []
-    while True:
-        try:
-            for Coin in Coinlist:
-                tickerinfo = pybithumb.PublicApi.ticker(Coin)
-                data = tickerinfo['data']
-                fluctate = data['fluctate_rate_24H']
-                Fluclist.append(fluctate)
-                time.sleep(1 / 90)
-            break
+    #           Get TopCoin List         #
+    # Coinlist = pybithq
+    TopCoin = ['BNP', 'PLX', 'CON', 'ENJ', 'LINK', 'ETH', 'DAC', 'ZEC', 'ICX']
 
-        except Exception as e:
-            Fluclist.append(None)
-            print('Error in making Topcoin :', e)
-
-    Fluclist = list(map(float, Fluclist))
-    series = pd.Series(Fluclist, Coinlist)
-    series = series.sort_values(ascending=False)
-
-    series = series[:10]
-    TopCoin = list(series.index)
     # TopCoin = list(map(str.upper, ['xem']))
 
-
     #           PARAMS           #
-    input_data_length = 30
-    model_num = '87_macd_osc'
+    input_data_length = 54
+    model_num = '116_ohlc'
     # crop_size_low = 200
     # crop_size_high = 100
     # crop_size_sudden_death = 100
@@ -87,25 +67,25 @@ if __name__ == '__main__':
             X_test = X_test.astype('float32').reshape(-1, row, col, 1)
 
             if 'ohlcmacd' in model_num:
-                X_test = X_test[:, :, [0, 1, 2, 3, 9, 10, 11, 12]]
+                X_test = X_test[:, :, [0, 1, 2, 3, -2]]
             elif 'macd_osc' in model_num:
                 X_test = X_test[:, :, [11]]
             elif 'rsimacd' in model_num:
-                X_test = X_test[:, :, [8, 9, 10, 11, 12]]
+                X_test = X_test[:, :, -5:]
+            elif 'ohlccmo' in model_num:
+                X_test = X_test[:, :, [0, 1, 2, 3, 5]]
             elif 'ohlc' in model_num:
                 X_test = X_test[:, :, [0, 1, 2, 3]]
             elif 'volume' in model_num:
                 X_test = X_test[:, :, [0, 1, 2, 3, 4]]
-            elif 'ma20' in model_num:
-                X_test = X_test[:, :, [0, 1, 2, 3, 5]]
             elif 'cmo' in model_num:
-                X_test = X_test[:, :, [0, 1, 2, 3, 6]]
+                X_test = X_test[:, :, [5]]
             elif 'obv' in model_num:
-                X_test = X_test[:, :, [0, 1, 2, 3, 7]]
+                X_test = X_test[:, :, [0, 1, 2, 3, 6]]
             elif 'rsi' in model_num:
-                X_test = X_test[:, :, [0, 1, 2, 3, 8]]
+                X_test = X_test[:, :, [0, 1, 2, 3, 7]]
             elif 'macd' in model_num:
-                X_test = X_test[:, :, [9, 10, 11, 12]]
+                X_test = X_test[:, :, -4:]
             # elif 'ohlcmacd' in
             # print(X_test.shape)
             # quit()
@@ -128,33 +108,40 @@ if __name__ == '__main__':
         if len(X_test) != 0:
 
             Y_pred_ = model.predict(X_test, verbose=1)
-            # Y_pred_[:, [-1]] *= 0.7
+            # Y_pred_[:, [-1]] *= 0.9
+            # print(Y_pred_[:, [2]])
 
-            Y_pred = np.argmax(Y_pred_, axis=1)
             # print(Y_pred)
             # quit()
 
+            #           LABELING BY SORTING         #
+            n = 10
+            Y_pred = np.zeros(len(Y_pred_))
+            for label in [0, 1, 2]:
+                max_index_list = Y_pred_[:, label].argsort()[::-1][:n]
+                for i in max_index_list:
+                    Y_pred[i] = label
+
+            #          LABELING BY PERCENTAGE       #
             # max_value = np.max(Y_pred_, axis=0)
             # print(max_value)
             # Y_pred = np.zeros(len(Y_pred_))
             # for i in range(len(Y_pred_)):
             #     if Y_pred_[i][0] > max_value[0] * 0.9:
             #         Y_pred[i] = 0
-            #     if Y_pred_[i][1] > max_value[1] * 0.95:
+            #     # if Y_pred_[i][1] > max_value[1] * 0.9:q
+            #     if Y_pred_[i][1] > 0.8:  # 0.8
             #         Y_pred[i] = 1
-
-            # for i in range(len(Y_pred2_)):
-            #     if Y_pred2_[i][2] > max_value2[2] * limit_line_high:
-            #         Y_pred2[i] = 2
-            # for i in range(len(Y_pred3_)):
-            #     if Y_pred3_[i][2] > max_value3[2] * limit_line_sudden_death:
-            #         Y_pred3[i] = 2
+            #     # if Y_pred_[i][2] > max_value[2] * 0.9:
+            #     if Y_pred_[i][2] > 0.8:  # 0.8
+            #         Y_pred[i] = 2
 
             if get_fig == 1:
 
+                spanlist = []
                 spanlist_low = []
                 spanlist_high = []
-                spanlist = []
+                spanlist_trend_up = list()
                 for m in range(len(Y_pred)):
                     if Y_pred[m] == 0.:
                         if m + 1 < len(Y_pred):
@@ -175,44 +162,52 @@ if __name__ == '__main__':
                         else:
                             spanlist_high.append((m - 1, m))
 
-                plt.subplot(311)
-                # plt.subplot(313)
-                # plt.plot(chart[:, [1]], 'gold', label='close')
-                plt.plot(chart[:, [-3]], 'g', label='close')
-                # plt.plot(chart[:, [-4]], 'r', label='close')
-                plt.plot(chart[:, [-2]], 'gold', label='close')
-                plt.legend(loc='upper right')
-                for i in range(len(spanlist)):
-                    plt.axvspan(spanlist[i][0], spanlist[i][1], facecolor='b', alpha=0.7)
+                osc = chart[:, [-3]] # >> osc가 아니라 curve_osc의 기울기로 해야함
+                for m in range(len(osc)):
+                    if osc[m] > 0:
+                        if m + 1 < len(osc):
+                            spanlist_trend_up.append((m, m + 1))
+                        else:
+                            spanlist_trend_up.append((m - 1, m))
 
-                plt.subplot(312)
-                # plt.subplot(313)
+                plt.figure(figsize=(10, 8))
+                # plt.subplot(311)
                 # plt.plot(chart[:, [1]], 'gold', label='close')
-                plt.plot(chart[:, [-3]], 'g', label='close')
+                # # plt.plot(chart[:, [-4]], '', label='close')
+                # # plt.plot(chart[:, [-3]], 'g', label='close')
+                # # plt.plot(chart[:, [-2]], 'gold', label='close')
+                # plt.legend(loc='upper right')
+                # for i in range(len(spanlist)):
+                #     plt.axvspan(spanlist[i][0], spanlist[i][1], facecolor='b', alpha=0.7)
+
+                plt.subplot(411)
+                plt.plot(min_max_scaler(chart[:, [1]]), 'gold', label='close')
                 # plt.plot(chart[:, [-4]], 'r', label='close')
-                plt.plot(chart[:, [-2]], 'gold', label='close')
+                # plt.plot(chart[:, [-3]], 'r', label='close')
+                # plt.plot(chart[:, [-2]], 'gold', label='close')
                 plt.legend(loc='upper right')
                 for i in range(len(spanlist_low)):
                     plt.axvspan(spanlist_low[i][0], spanlist_low[i][1], facecolor='c', alpha=0.7)
+                # for i in range(len(spanlist_trend_up)):
+                #     plt.axvspan(spanlist_trend_up[i][0], spanlist_trend_up[i][1], facecolor='b', alpha=0.3)
+                plt.subplot(412)
+                plt.plot(Y_pred_[:, [1]], 'limegreen', label='Y_pred')
 
-                plt.subplot(313)
-                # plt.subplot(313)
-                plt.plot(chart[:, [1]], 'gold', label='close')
+                plt.subplot(413)
+                plt.plot(min_max_scaler(chart[:, [1]]), 'gold', label='close')
+                # plt.plot(chart[:, [-3]], 'r', label='close')
                 # plt.plot(chart[:, [-5]], 'gold', label='close')
                 plt.legend(loc='upper right')
                 for i in range(len(spanlist_high)):
                     plt.axvspan(spanlist_high[i][0], spanlist_high[i][1], facecolor='m', alpha=0.7)
+                # for i in range(len(spanlist_trend_up)):
+                #     plt.axvspan(spanlist_trend_up[i][0], spanlist_trend_up[i][1], facecolor='b', alpha=0.3)
                 #
-                # plt.subplot(313)
-                # # plt.subplot(313)
-                # plt.plot(closeprice3, 'gold', label='close')
-                # # plt.plot(OBV, 'b', label='OBV')
-                # plt.legend(loc='upper right')
-                # for i in range(len(spanlist_sudden_death)):
-                #     plt.axvspan(spanlist_sudden_death[i][0], spanlist_sudden_death[i][1], facecolor='m', alpha=0.7)
+                plt.subplot(414)
+                plt.plot(Y_pred_[:, [2]], 'limegreen', label='Y_pred')
 
-                # plt.show()
-                plt.savefig('./Figure_trade/%s_%s/%s %s.png' % (input_data_length, model_num, datetime.now().date(), Coin), dpi=500)
-                plt.close()
+                plt.show()
+                # plt.savefig('./Figure_trade/%s_%s/%s %s.png' % (input_data_length, model_num, datetime.now().date(), Coin), dpi=500)
+                # plt.close()
 
 

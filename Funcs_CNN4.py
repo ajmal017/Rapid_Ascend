@@ -323,7 +323,7 @@ def obv(ohlcv_excel):
     return obv
 
 
-def macd(ohlcv_excel, short=12, long=26, signal=9):
+def macd(ohlcv_excel, short=105, long=168, signal=32):
 
     ohlcv_excel['MACD'] = ohlcv_excel['close'].ewm(span=short, min_periods=short-1, adjust=False).mean() - \
         ohlcv_excel['close'].ewm(span=long, min_periods=long-1, adjust=False).mean()

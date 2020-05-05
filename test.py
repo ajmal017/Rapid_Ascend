@@ -10,8 +10,23 @@ pd.set_option('display.max_columns', 3000)
 import matplotlib.pyplot as plt
 
 
-Made_X = np.load('Made_X/Made_X %s_%s.npy' % (30, 64), allow_pickle=True)
-print(Made_X.shape)
+with open("Keys.txt") as f:
+    lines = f.readlines()
+    key = lines[0].strip()
+    secret = lines[1].strip()
+    bithumb = pybithumb.Bithumb(key, secret)
+# print(bithumb.get_balance('POWR'))
+print(bithumb.get_order_completed(('ask', 'POWR', 'C0130000000006799308', 'KRW'))['data'])
+# none_list = [None] * 3
+# print(none_list[-3])
+
+#   순서대로 합해야한다  #
+
+
+# test_list = list()
+# print(test_list[-1])
+# Made_X = np.load('Made_X/Made_X %s_%s.npy' % (30, 64), allow_pickle=True)
+# print(Made_X.shape)
 # img = cv2.imread('./Made_Chart_all/30_66/2020-01-10 BTC_106.png')
 # img2 = img.copy()
 # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -258,11 +273,6 @@ from pandas.core.algorithms import value_counts
 # df = pybithumb.get_ohlcv('FCT', 'KRW', 'minute1')
 # # df.to_excel(dir + '2020-01-29 FCT ohlcv.xlsx')
 # print(df)
-# with open("Keys.txt") as f:
-#     lines = f.readlines()
-#     key = lines[0].strip()
-#     secret = lines[1].strip()
-#     bithumb = pybithumb.Bithumb(key, secret)
 #
 # import time
 #

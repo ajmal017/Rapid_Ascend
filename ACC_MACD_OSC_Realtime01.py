@@ -53,7 +53,7 @@ if __name__ == '__main__':
 
     #           PARAMS           #
     input_data_length = 30
-    model_num = '101_macd'
+    model_num = '90_macdonly'
     get_fig = 1
     get_excel = 0
 

@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/../../Project_GogiMaster/.idea/Project_GogiMaster.iml" filepath="$PROJECT_DIR$/../../Project_GogiMaster/.idea/Project_GogiMaster.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../../Project_Nuggi/.idea/Project_Nuggi.iml" filepath="$PROJECT_DIR$/../../Project_Nuggi/.idea/Project_Nuggi.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/Rapid_Ascend.iml" filepath="$PROJECT_DIR$/.idea/Rapid_Ascend.iml" />
       <module fileurl="file://$PROJECT_DIR$/../A.I_Coinbot/venv/Lib/site-packages/pybithumb/.idea/pybithumb.iml" filepath="$PROJECT_DIR$/../A.I_Coinbot/venv/Lib/site-packages/pybithumb/.idea/pybithumb.iml" />
     </modules>

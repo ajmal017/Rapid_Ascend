@@ -157,7 +157,8 @@ def low_high01(file, input_data_length, crop_size=None):
     ohlcv_excel['CMO'] = cmo(ohlcv_excel, period=9)
     ohlcv_excel['OBV'] = obv(ohlcv_excel)
     ohlcv_excel['RSI'] = rsi(ohlcv_excel, period=14)
-    macd(ohlcv_excel, short=100, long=158, signal=32)
+    # macd(ohlcv_excel, short=100, long=168, signal=32)
+    macd(ohlcv_excel, short=20, long=33, signal=5)
     # macd(ohlcv_excel, short=30, long=60, signal=30)
 
     # print(ohlcv_excel.columns)
@@ -240,7 +241,7 @@ def low_high01(file, input_data_length, crop_size=None):
             price = group_x[:, :4]
             volume = group_x[:, [4]]
 
-            scaled_pricema = min_max_scaler(price)
+            scaled_price = min_max_scaler(price)
 
             CMO = group_x[:, [-8]]
             OBV = group_x[:, [-7]]
@@ -248,7 +249,7 @@ def low_high01(file, input_data_length, crop_size=None):
             MACD = group_x[:, -5:-1]
             # scaled_MACD = max_abs_scaler(MACD)
 
-            x = np.concatenate((scaled_pricema[:, :4], volume, scaled_pricema[:, 4:], CMO, OBV, RSI, MACD), axis=1)
+            x = np.concatenate((scaled_price, volume, CMO, OBV, RSI, MACD), axis=1)
             # x = scaled_x + sudden_death  # axis=1, 세로로 합친다
             group_x = x[-input_data_length:]
 

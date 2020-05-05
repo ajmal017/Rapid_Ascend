@@ -1,3 +1,48 @@
+## 인공지능 가상화폐 주문 비서 개발
+
+
+
+## Intro
+
+최적의 매수 / 매도 포인트를 찾기 위해 CNN 모델을 사용해 **거래로직**이 적용된 차트 이미지를 학습하고 최적의 포인트를 도출한다. **Bithumb** API를 사용해 자동매매의 형식을 택했다.
+
+
+
+## Description
+
+* Make_X (...) : **<u>파일명이 Make_X로 시작하는</u>** 파일은 CNN 모델에 학습하기 위해 차트로부터 거래로직이 적용된 이미지 데이터를 생산하기 위한 파일이다. **분류 모델**이기 때문에 라벨링된 y값이 생성된다. 
+
+* Funcs_ (...) : 거래에 필요한 데이터를 제작하기 위해 필요한 함수들을 모아놓은 곳이다. **Bithumb API에서 제공하는 기능**들은 물론 **각종 지표**가 존재하며 **보유한 거래 알고리즘을 기반으로 수익을 확인하는 함수** 또한 존재한다.
+* Make_pred_ (...) : 학습된 인공지능 모델 파일 .hdf5을 로드해 **실시간 차트에 적용해보는 파일**이다. 
+* BVC_ (...) : BestValueCheck로 거래 알고리즘을 개발하는 과정에서 최적의 수익률을 도출하는 최적의 세팅을 선별하기위해 만들었다.
+* System_ (..) : 보유한 거래 로직으로 **실제로 자동매매**를 하는 파일이다. <u>Bithumb API를 사용해 자동매매 하는 방식이 궁금한 사람은 이 파일을 참고하면 좋다.</u>
+
+
+
+## Result
+
+![Figure_1](https://user-images.githubusercontent.com/50652715/81029875-92be5180-8ec1-11ea-88ed-e3c64a2f3423.png)
+
+**인공지능을 사용해 매수 / 매도 포인트를 포착한 예시** 
+
+가장 상단의 청록색 선이 매수 포인트를 의미하며 밑에서 두번째 그림의 자주색 선이 매도 포인트를 의미한다.
+
+
+
+**각 모델에 대한 상세한 세팅과 설명 그리고 결과를 담은 Markdown 파일 리스트들을 아래와 같이 정리하였다.** 
+
+1. 고저점 찾기.md
+2. 고저점 찾기2.md
+3. EMA_RIBBON.md
+4. MACD_OSC.md
+5. Quant.md
+6. Gaussian.md
+7. Support_Resistance_Line.md
+
+
+
+## 고저점 찾기.md 열어본 예시
+
 ## Tune Results.
 
 | Model No.      | Description                                                  |                                                              |
@@ -84,34 +129,33 @@
 > #### CROP_SIZE 와 LIMIT_LINE 의 조합이 중요
 >
 > 1. MODEL_ACC
->2. ~~CROP_SIZE (부분 확대하는 느낌)~~
+> 2. ~~CROP_SIZE (부분 확대하는 느낌)~~
 > 3. LIMIT_LINE
->4. ~~SUDDEN_DEATH~~
+> 4. ~~SUDDEN_DEATH~~
 >    * ~~찾아야 되는 패턴 : 저점이 갱신되었을때 고점의 반응~~
-> 
+>
 > ---
-> 
+>
 > #### ~~일정 틱 이후(CHECK_SPAN) 지지선이 갱신되면 손절모드로 전환~~
 >
 > #### 익절모드 : 최대 고점을 노린다.
 >
 > > crop_size_high=300
->>
+> >
 > > limit_line_high=0.65
->>
-> 
+>
 > 최대 고점을 노리다 보면, 고점이 안잡힌다. 어떻게 할 건가
-> 
+>
 > * ##### <u>고점이 안잡히는 경우 보정</u>
 >
 > #### 손절모드 : 최저 고점을 노린다. >> 바로 팔아버리기
 >
 > > crop_size_sudden_death=100
->>
+> >
 > > limit_line_sudden_death=0.45
 >
 > ---
-> 
+>
 > ~~LIMIT_LINE 을 사용할 때,  지정값을 사용하는 방법말고, MAX 값부터 N 개를 표시하는 방법은 어떨까~~
 
 
@@ -131,11 +175,12 @@
 | Best Model : softmax / categorical_crossentropy / batch_size=128 / rotation=60 / h_flip=True / width_shift=0.6 / height_shift=0.6 / fill_mode='nearest / filter_amt=100 / dense_relu / kernel_size=3,1 / |      |
 | ------------------------------------------------------------ | ---- |
 | 베이지언 하이퍼 파라미터 최적화 검색해보기 (automl 관련해서) |      |
+
 * #### Model Ensemble
 
   * https://towardsdatascience.com/how-i-used-transfer-learning-and-ensemble-learning-to-get-90-accuracy-in-kaggle-competition-5a5e4c7e63e
   * not_trainable : [https://inspiringpeople.github.io/data%20analysis/Ensemble_Stacking/](https://inspiringpeople.github.io/data analysis/Ensemble_Stacking/)
-  
+
 * #### ParamSearchCV
 
   Link : https://machinelearningmastery.com/grid-search-hyperparameters-deep-learning-models-python-keras/
@@ -145,7 +190,7 @@
   epoch 늘리기 (크게 의미가 없을거 같다, 100 안에서 꿑나고 있으니까)
 
   batch size 
-  
+
   
 
 ### 거래 코드
@@ -159,7 +204,7 @@
 > DATA_CHECK_SPAN = 20
 >
 > * REAL_TIME_CROP 적용
->* 이전 저점 포인트와 현재 포인트의 거리가 DATA_CHECK_SPAN 이상
+> * 이전 저점 포인트와 현재 포인트의 거리가 DATA_CHECK_SPAN 이상
 > * **최근 저점을 가장 잘 예측하는 SLICE or CROP_SIZE 를 찾는다.**
 > * 저점으로 예상해서 진입하려고 하면, 이전 저점을 찾아서 (현재로부터 적어도 CHECK_SPAN 만큼 떨어져있다.), 이전 저점 보다 0.1 이상 크면 진입한다.
 
@@ -179,3 +224,9 @@
 
 * 종가를 기준으로 예측하는 것이니, 55초 이후의 현재가격으로 매수 / 매도하면 될까
 * 저가는 그렇게 차이가 나지는 않네
+
+
+
+## Reference
+
+CNN 기반 주가 예측 : Taewook Kim, Ha Young Kim, Forecasting stock prices with a feature fusion LSTM-CNN 
